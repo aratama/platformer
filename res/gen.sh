@@ -1,0 +1,1 @@
+w4 png2src --rust player.png > player.rust
