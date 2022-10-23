@@ -1,42 +1,44 @@
 use crate::image::Image;
 use crate::vector2::Vector2;
-use crate::{palette::set_draw_color, wasm4};
-use std::cmp;
-
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
-pub struct Point {
-    pub x: i32,
-    pub y: i32,
-}
-
-const FRUIT_SPRITE: Image = [
-    0x00, 0xa0, 0x02, 0x00, 0x0e, 0xf0, 0x36, 0x5c, 0xd6, 0x57, 0xd5, 0x57, 0x35, 0x5c, 0x0f, 0xf0,
-];
+use crate::wasm4;
 
 const MAX_VELOCITY: f32 = 10.0;
+const MAX_PLAYER_Y: f32 = 100.0;
+const JUMP_VELOCITY: f32 = 2.5;
 
-pub struct Body {
-    pub position: Vector2,
-    pub velocity: Vector2,
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum Direction {
+    Left,
+    Right,
 }
 
-impl Body {
-    pub fn new(position: Vector2) -> Self {
+pub struct Body<'a> {
+    pub position: Vector2,
+    pub velocity: Vector2,
+    pub image: Image<'a>,
+    pub direction: Direction,
+}
+
+impl<'a> Body<'a> {
+    pub fn new(position: Vector2, image: Image<'a>) -> Self {
         Self {
             position,
             velocity: Vector2::default(),
+            image,
+            direction: Direction::Right,
         }
     }
 
     pub fn draw(&self) {
-        set_draw_color(0x4320);
-        wasm4::blit(
-            &FRUIT_SPRITE,
+        self.image.draw(
             self.position.x.floor() as i32,
             self.position.y.floor() as i32,
-            8,
-            8,
-            wasm4::BLIT_2BPP,
+            wasm4::BLIT_2BPP
+                | if self.direction == Direction::Right {
+                    0
+                } else {
+                    wasm4::BLIT_FLIP_X
+                },
         );
     }
 
@@ -55,7 +57,7 @@ impl Body {
         self.position.x += self.velocity.x;
         self.position.y += self.velocity.y;
 
-        self.position.y = f32::min(100.0, self.position.y)
+        self.position.y = f32::min(MAX_PLAYER_Y, self.position.y)
     }
 
     pub fn walk(&mut self, dx: f32, dy: f32) {
@@ -64,10 +66,12 @@ impl Body {
     }
 
     pub fn left(&mut self) {
+        self.direction = Direction::Left;
         self.walk(-1.0, 0.0)
     }
 
     pub fn right(&mut self) {
+        self.direction = Direction::Right;
         self.walk(1.0, 0.0)
     }
 
@@ -80,6 +84,6 @@ impl Body {
     }
 
     pub fn jump(&mut self) {
-        self.velocity.y = -2.5
+        self.velocity.y = -JUMP_VELOCITY
     }
 }
