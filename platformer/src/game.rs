@@ -1,5 +1,6 @@
 use crate::body::Body;
 use crate::fruit::FRUIT_IMAGE;
+use crate::input::Inputs;
 use crate::player::PLAYER_IMAGE;
 use crate::vector2::Vector2;
 use crate::wasm4;
@@ -66,13 +67,15 @@ impl<'a> Game<'a> {
     }
 
     pub fn update(&mut self) {
+        let gamepad = unsafe { *wasm4::GAMEPAD1 };
+
         self.frame_count += 1;
 
         self.input();
 
-        self.player.update();
+        self.player.update(Inputs::new(gamepad, self.prev_gamepad));
 
-        self.fruit.update();
+        self.fruit.update(Inputs::new(0, 0));
 
         world::draw();
 
