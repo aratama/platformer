@@ -2,12 +2,12 @@ use crate::body::{Body, Point};
 use crate::image::Image;
 use crate::palette::set_draw_color;
 use crate::vector2::Vector2;
+use crate::world;
+use crate::player;
 use crate::wasm4;
 use fastrand::Rng;
 
-const FRUIT_SPRITE: Image = [
-    0x00, 0xa0, 0x02, 0x00, 0x0e, 0xf0, 0x36, 0x5c, 0xd6, 0x57, 0xd5, 0x57, 0x35, 0x5c, 0x0f, 0xf0,
-];
+
 
 pub struct Game {
     rng: Rng,
@@ -16,6 +16,8 @@ pub struct Game {
     prev_gamepad: u8,
     fruit: Body,
 }
+
+const FRUIT_SPRITE: [u8; 16] = [0x00, 0xa0, 0x02, 0x00, 0x0e, 0xf0, 0x36, 0x5c, 0xd6, 0x57, 0xd5, 0x57, 0x35, 0x5c, 0x0f, 0xf0];
 
 impl Game {
     pub fn new() -> Self {
@@ -74,6 +76,8 @@ impl Game {
         self.player.update();
 
         self.fruit.update();
+
+        world::draw();
 
         self.player.draw();
 

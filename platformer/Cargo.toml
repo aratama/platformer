@@ -13,8 +13,10 @@ fastrand = "1.6.0"
 lazy_static = "1.4.0"
 
 [profile.release]
+debug = true
 lto = true
 opt-level = "z"
+panic = 'abort'
 
 [features]
 # use `--no-default-features` or comment out next line to disable allocator

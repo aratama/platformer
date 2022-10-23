@@ -5,6 +5,8 @@ mod game;
 mod image;
 mod palette;
 mod vector2;
+mod world;
+mod player;
 mod wasm4;
 use game::Game;
 use lazy_static::lazy_static;
