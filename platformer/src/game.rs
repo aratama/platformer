@@ -21,9 +21,10 @@ impl<'a> Game<'a> {
 
         Self {
             frame_count: 0,
-            player: Body::new(Vector2::new(8.0 * 4.0, 8.0 * 4.0), PLAYER_IMAGE),
+            player: Body::new("player", Vector2::new(8.0 * 4.0, 8.0 * 4.0), PLAYER_IMAGE),
             prev_gamepad: 0,
             fruit: Body::new(
+                "fruit",
                 Vector2::new(
                     rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
                     rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
@@ -52,11 +53,11 @@ impl<'a> Game<'a> {
         if self.is_button_pressed(wasm4::BUTTON_RIGHT) {
             self.player.right();
         }
-        if self.is_button_pressed(wasm4::BUTTON_UP) {
-            self.player.up();
-        }
-        if self.is_button_pressed(wasm4::BUTTON_DOWN) {
-            self.player.down();
+
+        if !self.is_button_pressed(wasm4::BUTTON_LEFT)
+            && !self.is_button_pressed(wasm4::BUTTON_RIGHT)
+        {
+            self.player.velocity.x = 0.0;
         }
 
         if self.is_button_just_pressed(wasm4::BUTTON_1) {
@@ -75,12 +76,12 @@ impl<'a> Game<'a> {
 
         self.player.update(Inputs::new(gamepad, self.prev_gamepad));
 
-        self.fruit.update(Inputs::new(0, 0));
+        // self.fruit.update(Inputs::new(0, 0));
 
         world::draw();
 
         self.player.draw();
 
-        self.fruit.draw();
+        // self.fruit.draw();
     }
 }
