@@ -59,6 +59,10 @@ impl Game {
             self.player.down();
         }
 
+        if self.isButtonJustPressed(wasm4::BUTTON_1) {
+            self.player.jump()
+        }
+
         self.prev_gamepad = unsafe { *wasm4::GAMEPAD1 };
     }
 
@@ -68,6 +72,8 @@ impl Game {
         self.input();
 
         self.player.update();
+
+        self.fruit.update();
 
         self.player.draw();
 
