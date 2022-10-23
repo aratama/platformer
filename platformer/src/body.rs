@@ -1,3 +1,5 @@
+use crate::image::Image;
+use crate::vector2::Vector2;
 use crate::{palette::set_draw_color, wasm4};
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
@@ -6,82 +8,51 @@ pub struct Point {
     pub y: i32,
 }
 
+const FRUIT_SPRITE: Image = [
+    0x00, 0xa0, 0x02, 0x00, 0x0e, 0xf0, 0x36, 0x5c, 0xd6, 0x57, 0xd5, 0x57, 0x35, 0x5c, 0x0f, 0xf0,
+];
+
 pub struct Body {
-    pub body: Vec<Point>,
-    pub direction: Point,
+    pub position: Vector2,
 }
 
 impl Body {
-    pub fn new() -> Self {
-        Self {
-            body: vec![
-                Point { x: 2, y: 0 },
-                Point { x: 1, y: 0 },
-                Point { x: 0, y: 0 },
-            ],
-            direction: Point { x: 1, y: 0 },
-        }
+    pub fn new(position: Vector2) -> Self {
+        Self { position }
     }
 
     pub fn draw(&self) {
-        set_draw_color(0x43);
-
-        for &Point { x, y } in self.body.iter() {
-            wasm4::rect(x * 8, y * 8, 8, 8);
-        }
-
-        set_draw_color(0x4);
-        wasm4::rect(self.body[0].x * 8, self.body[0].y * 8, 8, 8);
+        set_draw_color(0x4320);
+        wasm4::blit(
+            &FRUIT_SPRITE,
+            self.position.x.floor() as i32,
+            self.position.y.floor() as i32,
+            8,
+            8,
+            wasm4::BLIT_2BPP,
+        );
     }
 
-    pub fn update(&mut self) -> Option<Point> {
-        self.body.insert(
-            0,
-            Point {
-                x: (self.body[0].x + self.direction.x) % 20,
-                y: (self.body[0].y + self.direction.y) % 20,
-            },
-        );
+    pub fn update(&mut self) {}
 
-        if self.body[0].x < 0 {
-            self.body[0].x = 19;
-        }
-
-        if self.body[0].y < 0 {
-            self.body[0].y = 19;
-        }
-
-        self.body.pop()
+    pub fn walk(&mut self, dx: f32, dy: f32) {
+        self.position.x += dx;
+        self.position.y += dy;
     }
 
     pub fn left(&mut self) {
-        if self.direction.x == 0 {
-            self.direction = Point { x: -1, y: 0 };
-        }
+        self.walk(-1.0, 0.0)
     }
 
     pub fn right(&mut self) {
-        if self.direction.x == 0 {
-            self.direction = Point { x: 1, y: 0 };
-        }
+        self.walk(1.0, 0.0)
     }
 
     pub fn up(&mut self) {
-        if self.direction.y == 0 {
-            self.direction = Point { x: 0, y: -1 };
-        }
+        self.walk(0.0, -1.0)
     }
 
     pub fn down(&mut self) {
-        if self.direction.y == 0 {
-            self.direction = Point { x: 0, y: 1 };
-        }
-    }
-
-    pub fn is_dead(&self) -> bool {
-        self.body
-            .iter()
-            .skip(1)
-            .any(|&body_section| body_section == self.body[0])
+        self.walk(0.0, 1.0)
     }
 }

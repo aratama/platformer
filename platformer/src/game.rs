@@ -1,6 +1,7 @@
 use crate::body::{Body, Point};
 use crate::image::Image;
 use crate::palette::set_draw_color;
+use crate::vector2::Vector2;
 use crate::wasm4;
 use fastrand::Rng;
 
@@ -13,7 +14,7 @@ pub struct Game {
     frame_count: u32,
     player: Body,
     prev_gamepad: u8,
-    fruit: Point,
+    fruit: Body,
 }
 
 impl Game {
@@ -22,34 +23,43 @@ impl Game {
 
         Self {
             frame_count: 0,
-            player: Body::new(),
+            player: Body::new(Vector2::new(8.0 * 4.0, 8.0 * 4.0)),
             prev_gamepad: 0,
-            fruit: Point {
-                x: rng.i32(0..20),
-                y: rng.i32(0..20),
-            },
+            fruit: Body::new(Vector2::new(
+                rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
+                rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
+            )),
             rng,
         }
     }
 
-    pub fn input(&mut self) {
+    pub fn isButtonPressed(&mut self, button: u8) -> bool {
         let gamepad = unsafe { *wasm4::GAMEPAD1 };
-        let just_pressed = gamepad & (gamepad ^ self.prev_gamepad);
+        let just = gamepad & (gamepad ^ self.prev_gamepad);
+        (gamepad) & button != 0
+    }
 
-        if just_pressed & wasm4::BUTTON_LEFT != 0 {
+    pub fn isButtonJustPressed(&mut self, button: u8) -> bool {
+        let gamepad = unsafe { *wasm4::GAMEPAD1 };
+        let just = gamepad & (gamepad ^ self.prev_gamepad);
+        (just) & button != 0
+    }
+
+    pub fn input(&mut self) {
+        if self.isButtonPressed(wasm4::BUTTON_LEFT) {
             self.player.left();
         }
-        if just_pressed & wasm4::BUTTON_RIGHT != 0 {
+        if self.isButtonPressed(wasm4::BUTTON_RIGHT) {
             self.player.right();
         }
-        if just_pressed & wasm4::BUTTON_UP != 0 {
+        if self.isButtonPressed(wasm4::BUTTON_UP) {
             self.player.up();
         }
-        if just_pressed & wasm4::BUTTON_DOWN != 0 {
+        if self.isButtonPressed(wasm4::BUTTON_DOWN) {
             self.player.down();
         }
 
-        self.prev_gamepad = gamepad;
+        self.prev_gamepad = unsafe { *wasm4::GAMEPAD1 };
     }
 
     pub fn update(&mut self) {
@@ -57,38 +67,10 @@ impl Game {
 
         self.input();
 
-        if self.frame_count % 15 == 0 {
-            let dropped_pos = self.player.update();
-
-            if self.player.is_dead() {
-                self.player = Body::new();
-                self.fruit = Point {
-                    x: self.rng.i32(0..20),
-                    y: self.rng.i32(0..20),
-                };
-            }
-
-            if self.player.body[0] == self.fruit {
-                if let Some(last_pos) = dropped_pos {
-                    self.player.body.push(last_pos);
-                }
-
-                self.rng.seed(self.frame_count.into());
-                self.fruit.x = self.rng.i32(0..20);
-                self.fruit.y = self.rng.i32(0..20);
-            }
-        }
+        self.player.update();
 
         self.player.draw();
 
-        set_draw_color(0x4320);
-        wasm4::blit(
-            &FRUIT_SPRITE,
-            self.fruit.x * 8,
-            self.fruit.y * 8,
-            8,
-            8,
-            wasm4::BLIT_2BPP,
-        );
+        self.fruit.draw();
     }
 }
