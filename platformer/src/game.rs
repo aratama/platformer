@@ -1,9 +1,10 @@
 use crate::body::{Body, Point};
+use crate::image::Image;
 use crate::palette::set_draw_color;
 use crate::wasm4;
 use fastrand::Rng;
 
-const FRUIT_SPRITE: [u8; 16] = [
+const FRUIT_SPRITE: Image = [
     0x00, 0xa0, 0x02, 0x00, 0x0e, 0xf0, 0x36, 0x5c, 0xd6, 0x57, 0xd5, 0x57, 0x35, 0x5c, 0x0f, 0xf0,
 ];
 
@@ -79,8 +80,8 @@ impl Game {
         }
 
         self.player.draw();
-        set_draw_color(0x4320);
 
+        set_draw_color(0x4320);
         wasm4::blit(
             &FRUIT_SPRITE,
             self.fruit.x * 8,

@@ -2,7 +2,9 @@
 mod alloc;
 mod body;
 mod game;
+mod image;
 mod palette;
+mod vector2;
 mod wasm4;
 use game::Game;
 use lazy_static::lazy_static;
@@ -14,7 +16,7 @@ lazy_static! {
 
 #[no_mangle]
 fn start() {
-    palette::set_palette([0xfff6d3, 0xf9a875, 0xeb6b6f, 0x7c3f58]);
+    // palette::set_palette([0xfff6d3, 0xf9a875, 0xeb6b6f, 0x7c3f58]);
 }
 
 #[no_mangle]

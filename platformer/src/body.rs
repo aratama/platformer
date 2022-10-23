@@ -1,6 +1,6 @@
 use crate::{palette::set_draw_color, wasm4};
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub struct Point {
     pub x: i32,
     pub y: i32,
