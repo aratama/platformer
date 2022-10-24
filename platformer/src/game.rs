@@ -1,4 +1,5 @@
 use crate::body::Body;
+use crate::graphics::Graphics;
 use crate::image::fruit::FRUIT_IMAGE;
 use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
@@ -54,12 +55,16 @@ impl Game {
             fruit.update(Inputs::new(0, 0));
         }
 
-        world::draw();
+        let graphics = Graphics {
+            dx: 80 - self.player.position.x.floor() as i32,
+            dy: 120 - self.player.position.y.floor() as i32,
+        };
+        world::draw(graphics);
 
-        self.player.draw();
+        self.player.draw(graphics);
 
         for fruit in self.fruits.iter() {
-            fruit.draw();
+            fruit.draw(graphics);
         }
     }
 }

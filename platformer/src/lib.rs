@@ -2,6 +2,7 @@
 mod alloc;
 mod body;
 mod game;
+mod graphics;
 mod image;
 mod input;
 mod palette;

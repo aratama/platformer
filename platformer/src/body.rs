@@ -1,8 +1,8 @@
+use crate::graphics::Graphics;
 use crate::image::lie::LIE_IMAGE;
+use crate::image::lookup::LOOKUP_IMAGE;
 use crate::image::Image;
 use crate::input::Inputs;
-
-use crate::image::lookup::LOOKUP_IMAGE;
 use crate::vector2::Vector2;
 use crate::wasm4;
 use crate::world;
@@ -45,7 +45,7 @@ impl Body {
         }
     }
 
-    pub fn draw(&self) {
+    pub fn draw(&self, g: Graphics) {
         let flags = wasm4::BLIT_2BPP
             | if self.direction == Direction::Right {
                 0
@@ -61,7 +61,7 @@ impl Body {
         let x = (i.width as f32 * -0.5 + self.position.x.floor()) as i32;
         let y = (-1.0 * i.height as f32 + 1.0 + self.position.y.floor()) as i32;
 
-        i.draw(x, y, flags);
+        g.draw(i, x, y, flags);
     }
 
     pub fn update(&mut self, inputs: Inputs) {
