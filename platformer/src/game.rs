@@ -1,36 +1,40 @@
 use crate::body::Body;
-use crate::fruit::FRUIT_IMAGE;
+use crate::image::fruit::FRUIT_IMAGE;
+use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
-use crate::player::PLAYER_IMAGE;
 use crate::vector2::Vector2;
 use crate::wasm4;
 use crate::world;
 use fastrand::Rng;
 
-pub struct Game<'a> {
+pub struct Game {
     rng: Rng,
     frame_count: u32,
-    player: Body<'a>,
+    player: Body,
     prev_gamepad: u8,
-    fruit: Body<'a>,
+    fruits: std::vec::Vec<Body>,
 }
 
-impl<'a> Game<'a> {
+impl Game {
     pub fn new() -> Self {
         let rng = Rng::with_seed(235);
 
+        let player = Body::new("player", Vector2::new(8.0 * 4.0, 8.0 * 4.0), PLAYER_IMAGE);
+
+        let fruits = vec![Body::new(
+            "fruit",
+            Vector2::new(
+                rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
+                rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
+            ),
+            FRUIT_IMAGE,
+        )];
+
         Self {
             frame_count: 0,
-            player: Body::new("player", Vector2::new(8.0 * 4.0, 8.0 * 4.0), PLAYER_IMAGE),
+            player,
             prev_gamepad: 0,
-            fruit: Body::new(
-                "fruit",
-                Vector2::new(
-                    rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
-                    rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
-                ),
-                FRUIT_IMAGE,
-            ),
+            fruits,
             rng,
         }
     }
@@ -76,12 +80,16 @@ impl<'a> Game<'a> {
 
         self.player.update(Inputs::new(gamepad, self.prev_gamepad));
 
-        // self.fruit.update(Inputs::new(0, 0));
+        for fruit in self.fruits.iter_mut() {
+            fruit.update(Inputs::new(0, 0));
+        }
 
         world::draw();
 
         self.player.draw();
 
-        // self.fruit.draw();
+        for fruit in self.fruits.iter() {
+            fruit.draw();
+        }
     }
 }

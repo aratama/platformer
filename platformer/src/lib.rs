@@ -1,14 +1,10 @@
 #[cfg(feature = "buddy-alloc")]
 mod alloc;
 mod body;
-mod fruit;
 mod game;
 mod image;
 mod input;
-mod lie;
-mod lookup;
 mod palette;
-mod player;
 mod point;
 mod vector2;
 mod wasm4;
@@ -18,7 +14,7 @@ use lazy_static::lazy_static;
 use std::sync::Mutex;
 
 lazy_static! {
-    static ref GAME: Mutex<Game<'static>> = Mutex::new(Game::new());
+    static ref GAME: Mutex<Game> = Mutex::new(Game::new());
 }
 
 #[no_mangle]

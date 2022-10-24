@@ -1,17 +1,15 @@
+use crate::image::lie::LIE_IMAGE;
 use crate::image::Image;
 use crate::input::Inputs;
-use crate::lie::LIE_IMAGE;
-use crate::player::PLAYER_IMAGE;
 
-use crate::lookup::LOOKUP_IMAGE;
+use crate::image::lookup::LOOKUP_IMAGE;
 use crate::vector2::Vector2;
 use crate::wasm4;
 use crate::world;
-use crate::Game;
 
 const MAX_VELOCITY: f32 = 100.0;
 const JUMP_VELOCITY: f32 = 2.5;
-const WALK_VELOCITY: f32 = 2.0;
+const WALK_VELOCITY: f32 = 1.0;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub enum Direction {
@@ -25,17 +23,17 @@ pub enum Pose {
     LookUp,
 }
 
-pub struct Body<'a> {
-    pub name: &'a str,
+pub struct Body {
+    pub name: &'static str,
     pub position: Vector2,
     pub velocity: Vector2,
-    pub image: Image<'a>,
+    pub image: Image,
     pub direction: Direction,
     pub pose: Pose,
 }
 
-impl<'a> Body<'a> {
-    pub fn new(name: &'a str, position: Vector2, image: Image<'a>) -> Self {
+impl Body {
+    pub fn new(name: &'static str, position: Vector2, image: Image) -> Self {
         Self {
             name,
             position,
@@ -98,8 +96,8 @@ impl<'a> Body<'a> {
                 let px = self.position.x + sign;
                 let py = self.position.y + sign * (vy / vx);
 
-                let cx = (px / 8.0).floor() as u32;
-                let cy = (py / 8.0).floor() as u32;
+                let cx = (px / 8.0).floor() as i32;
+                let cy = (py / 8.0).floor() as i32;
                 let cell = world::getCell(cx, cy);
 
                 if cell == 0 {
@@ -121,8 +119,8 @@ impl<'a> Body<'a> {
                 let px = self.position.x + sign * (vx / vy);
                 let py = self.position.y + sign;
 
-                let cx = (px / 8.0).floor() as u32;
-                let cy = (py / 8.0).floor() as u32;
+                let cx = (px / 8.0).floor() as i32;
+                let cy = (py / 8.0).floor() as i32;
                 let cell = world::getCell(cx, cy);
 
                 if cell == 0 {
@@ -139,8 +137,8 @@ impl<'a> Body<'a> {
 
             let px = self.position.x + dx;
             let py = self.position.y + dy;
-            let cx = (px / 8.0).floor() as u32;
-            let cy = (py / 8.0).floor() as u32;
+            let cx = (px / 8.0).floor() as i32;
+            let cy = (py / 8.0).floor() as i32;
             let cell = world::getCell(cx, cy);
             if cell == 0 {
                 // self.position.x = px;

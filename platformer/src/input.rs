@@ -1,11 +1,3 @@
-use crate::body::Body;
-use crate::fruit::FRUIT_IMAGE;
-use crate::player::PLAYER_IMAGE;
-use crate::vector2::Vector2;
-use crate::wasm4;
-use crate::world;
-use fastrand::Rng;
-
 pub struct Inputs {
     gamepad: u8,
     prev_gamepad: u8,

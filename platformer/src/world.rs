@@ -45,9 +45,9 @@ const WORLD: &str = r#################################"
 ###############################
 "#################################;
 
-pub fn getCell(x: u32, y: u32) -> u32 {
-    if 0 <= x && x < WORLD_WIDTH && 0 <= y && y < WORLD_HEIGHT {
-        let i = (WORLD_WIDTH * y + (x + 1)) as usize;
+pub fn getCell(x: i32, y: i32) -> u32 {
+    if 0 <= x && x < WORLD_WIDTH as i32 && 0 <= y && y < WORLD_HEIGHT as i32 {
+        let i = (WORLD_WIDTH as i32 * y + (x + 1)) as usize;
         let s = WORLD[i..(i + 1)].to_string();
         if s == "#" {
             return 1;
@@ -87,7 +87,7 @@ pub fn draw() {
 
     for y in 0..WORLD_WIDTH {
         for x in 0..WORLD_HEIGHT {
-            let cell = getCell(x, y);
+            let cell = getCell(x as i32, y as i32);
             if cell != 0 {
                 set_draw_color(0x44);
                 wasm4::rect(8 * x as i32, 8 * y as i32, 8, 8);
