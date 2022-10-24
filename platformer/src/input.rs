@@ -1,3 +1,4 @@
+#[derive(Clone, Copy)]
 pub struct Inputs {
     gamepad: u8,
     prev_gamepad: u8,

@@ -39,44 +39,14 @@ impl Game {
         }
     }
 
-    pub fn is_button_pressed(&mut self, button: u8) -> bool {
-        let gamepad = unsafe { *wasm4::GAMEPAD1 };
-        (gamepad) & button != 0
-    }
-
-    pub fn is_button_just_pressed(&mut self, button: u8) -> bool {
-        let gamepad = unsafe { *wasm4::GAMEPAD1 };
-        let just = gamepad & (gamepad ^ self.prev_gamepad);
-        (just) & button != 0
-    }
-
-    pub fn input(&mut self) {
-        if self.is_button_pressed(wasm4::BUTTON_LEFT) {
-            self.player.left();
-        }
-        if self.is_button_pressed(wasm4::BUTTON_RIGHT) {
-            self.player.right();
-        }
-
-        if !self.is_button_pressed(wasm4::BUTTON_LEFT)
-            && !self.is_button_pressed(wasm4::BUTTON_RIGHT)
-        {
-            self.player.velocity.x = 0.0;
-        }
-
-        if self.is_button_just_pressed(wasm4::BUTTON_1) {
-            self.player.jump()
-        }
-
-        self.prev_gamepad = unsafe { *wasm4::GAMEPAD1 };
-    }
-
     pub fn update(&mut self) {
         let gamepad = unsafe { *wasm4::GAMEPAD1 };
 
         self.frame_count += 1;
 
-        self.input();
+        self.player.input(Inputs::new(gamepad, self.prev_gamepad));
+
+        self.prev_gamepad = unsafe { *wasm4::GAMEPAD1 };
 
         self.player.update(Inputs::new(gamepad, self.prev_gamepad));
 

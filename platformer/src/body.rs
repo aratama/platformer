@@ -10,6 +10,7 @@ use crate::world;
 const MAX_VELOCITY: f32 = 100.0;
 const JUMP_VELOCITY: f32 = 2.5;
 const WALK_VELOCITY: f32 = 1.0;
+const CRAWL_VELOCITY: f32 = 0.25;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub enum Direction {
@@ -75,8 +76,7 @@ impl Body {
             f32::min(MAX_VELOCITY, self.velocity.x + gravity.x),
         );
 
-        self.delta(self.velocity.x, 0.0);
-        self.delta(0.0, self.velocity.y);
+        self.delta(self.velocity.x, self.velocity.y);
 
         self.pose = if inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
             Pose::Lie
@@ -88,82 +88,74 @@ impl Body {
     }
 
     pub fn delta(&mut self, vx: f32, vy: f32) {
-        if f32::abs(vy) <= f32::abs(vx) {
-            let mut dx = vx;
-            let mut dy = vy;
-            while 1.0 <= f32::abs(dx) {
-                let sign = if 0.0 < dx { 1.0 } else { -1.0 };
-                let px = self.position.x + sign;
-                let py = self.position.y + sign * (vy / vx);
-
-                let cx = (px / 8.0).floor() as i32;
-                let cy = (py / 8.0).floor() as i32;
-                let cell = world::getCell(cx, cy);
-
-                if cell == 0 {
-                    dx -= sign;
-                    dy -= sign;
-                    self.position.x = px;
-                    self.position.y = py;
-                } else {
-                    self.velocity.x = 0.0;
-                    self.velocity.y = 0.0;
-                    break;
-                }
-            }
-        } else {
-            let mut dx = vx;
-            let mut dy = vy;
-            while 1.0 <= f32::abs(dy) {
-                let sign = if 0.0 < dy { 1.0 } else { -1.0 };
-                let px = self.position.x + sign * (vx / vy);
-                let py = self.position.y + sign;
-
-                let cx = (px / 8.0).floor() as i32;
-                let cy = (py / 8.0).floor() as i32;
-                let cell = world::getCell(cx, cy);
-
-                if cell == 0 {
-                    dx -= sign;
-                    dy -= sign;
-                    self.position.x = px;
-                    self.position.y = py;
-                } else {
-                    self.velocity.x = 0.0;
-                    self.velocity.y = 0.0;
-                    break;
-                }
-            }
-
-            let px = self.position.x + dx;
-            let py = self.position.y + dy;
+        let mut dx = vx;
+        while 0.001 <= f32::abs(dx) {
+            let sign = if 0.0 < dx { 1.0 } else { -1.0 };
+            let stride = sign * f32::min(1.0, f32::abs(dx));
+            let px = self.position.x + stride;
             let cx = (px / 8.0).floor() as i32;
+            let cy = (self.position.y.floor() / 8.0) as i32;
+            let cell = world::getCell(cx, cy);
+            if cell == 0 {
+                dx -= stride;
+                self.position.x = px;
+            } else {
+                self.velocity.x = 0.0;
+                break;
+            }
+        }
+
+        let mut dy = vy;
+        while 0.001 <= f32::abs(dy) {
+            let sign = if 0.0 < dy { 1.0 } else { -1.0 };
+            let stride = sign * f32::min(1.0, f32::abs(dy));
+            let py = self.position.y + stride;
+            let cx = (self.position.x.floor() / 8.0) as i32;
             let cy = (py / 8.0).floor() as i32;
             let cell = world::getCell(cx, cy);
             if cell == 0 {
-                // self.position.x = px;
+                dy -= stride;
                 self.position.y = py;
+            } else {
+                self.velocity.y = 0.0;
+                break;
             }
         }
-    }
-
-    pub fn walk(&mut self, dx: f32, dy: f32) {
-        self.position.x += dx;
-        self.position.y += dy;
-    }
-
-    pub fn left(&mut self) {
-        self.direction = Direction::Left;
-        self.velocity.x = -WALK_VELOCITY;
-    }
-
-    pub fn right(&mut self) {
-        self.direction = Direction::Right;
-        self.velocity.x = WALK_VELOCITY;
     }
 
     pub fn jump(&mut self) {
         self.pose = Pose::Lie;
         self.velocity.y = -JUMP_VELOCITY
+    }
+
+    pub fn walk(&mut self, speed: f32, input: Inputs) {
+        self.velocity.x = WALK_VELOCITY
+            * speed
+            * if input.is_button_pressed(wasm4::BUTTON_DOWN) {
+                CRAWL_VELOCITY
+            } else {
+                1.0
+            };
+    }
+
+    pub fn input(&mut self, input: Inputs) {
+        if input.is_button_pressed(wasm4::BUTTON_LEFT) {
+            self.direction = Direction::Left;
+            self.walk(-1.0, input);
+        }
+        if input.is_button_pressed(wasm4::BUTTON_RIGHT) {
+            self.direction = Direction::Right;
+            self.walk(1.0, input);
+        }
+
+        if !input.is_button_pressed(wasm4::BUTTON_LEFT)
+            && !input.is_button_pressed(wasm4::BUTTON_RIGHT)
+        {
+            self.velocity.x = 0.0;
+        }
+
+        if input.is_button_just_pressed(wasm4::BUTTON_1) {
+            self.jump()
+        }
     }
 }
