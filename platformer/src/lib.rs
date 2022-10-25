@@ -1,3 +1,4 @@
+mod aabb;
 #[cfg(feature = "buddy-alloc")]
 mod alloc;
 mod body;

@@ -20,7 +20,7 @@ impl Game {
     pub fn new() -> Self {
         let rng = Rng::with_seed(235);
 
-        let player = Body::new("player", Vector2::new(8.0 * 4.0, 8.0 * 4.0), PLAYER_IMAGE);
+        let player = Body::new("player", Vector2::new(8.0 * 5.0, 8.0 * 4.0), PLAYER_IMAGE);
 
         let fruits = vec![Body::new(
             "fruit",
@@ -56,8 +56,10 @@ impl Game {
         }
 
         let graphics = Graphics {
+            frame_count: self.frame_count,
+            debug: false,
             dx: 80 - self.player.position.x.floor() as i32,
-            dy: 120 - self.player.position.y.floor() as i32,
+            dy: i32::max(8 * 2, 80 - self.player.position.y.floor() as i32),
         };
         world::draw(graphics);
 

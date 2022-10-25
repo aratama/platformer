@@ -3,6 +3,8 @@ use crate::wasm4;
 
 #[derive(Clone, Copy, Default)]
 pub struct Graphics {
+    pub frame_count: u32,
+    pub debug: bool,
     pub dx: i32,
     pub dy: i32,
 }
@@ -18,5 +20,15 @@ impl Graphics {
 
     pub fn rect(&self, x: i32, y: i32, width: u32, height: u32) {
         wasm4::rect(x + self.dx, y + self.dy, width, height)
+    }
+
+    pub fn set_draw_color(&self, idx: u16) {
+        unsafe { *wasm4::DRAW_COLORS = idx }
+    }
+
+    pub fn set_palette(&self, palette: [u32; 4]) {
+        unsafe {
+            *wasm4::PALETTE = palette;
+        }
     }
 }

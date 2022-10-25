@@ -1,3 +1,4 @@
+use crate::aabb::AABB;
 use crate::graphics::Graphics;
 use crate::image::lie::LIE_IMAGE;
 use crate::image::lookup::LOOKUP_IMAGE;
@@ -46,6 +47,15 @@ impl Body {
     }
 
     pub fn draw(&self, g: Graphics) {
+        if g.debug {
+            if (g.frame_count / 8) % 2 == 0 {
+                g.set_draw_color(0x20);
+            } else {
+                g.set_draw_color(0x10);
+            }
+            g.rect(self.position.x as i32, self.position.y as i32, 8, 8);
+        }
+
         let flags = wasm4::BLIT_2BPP
             | if self.direction == Direction::Right {
                 0
@@ -58,9 +68,8 @@ impl Body {
             Pose::Lie => LIE_IMAGE,
             Pose::LookUp => LOOKUP_IMAGE,
         };
-        let x = (i.width as f32 * -0.5 + self.position.x.floor()) as i32;
-        let y = (-1.0 * i.height as f32 + 1.0 + self.position.y.floor()) as i32;
-
+        let x = (4.0 - i.width as f32 * 0.5 + self.position.x.floor()) as i32;
+        let y = (8.0 - i.height as f32 + self.position.y.floor()) as i32;
         g.draw(i, x, y, flags);
     }
 
@@ -88,43 +97,68 @@ impl Body {
     }
 
     pub fn delta(&mut self, vx: f32, vy: f32) {
-        let mut dx = vx;
-        while 0.001 <= f32::abs(dx) {
-            let sign = if 0.0 < dx { 1.0 } else { -1.0 };
-            let stride = sign * f32::min(1.0, f32::abs(dx));
-            let px = self.position.x + stride;
-            let cx = (px / 8.0).floor() as i32;
-            let cy = (self.position.y.floor() / 8.0) as i32;
-            let cell = world::getCell(cx, cy);
-            if cell == 0 {
-                dx -= stride;
-                self.position.x = px;
-            } else {
-                self.velocity.x = 0.0;
-                break;
+        // 壁となるAABBを集める
+        let mut walls = vec![];
+        let px = (self.position.x / 8.0).floor() as i32;
+        let py = (self.position.y / 8.0).floor() as i32;
+
+        for cx in (px - 1)..(px + 2) {
+            for cy in (py - 1)..(py + 2) {
+                let cell = world::getCell(cx, cy);
+                if cell != 0 {
+                    walls.push(AABB {
+                        x: 8.0 * cx as f32,
+                        y: 8.0 * cy as f32,
+                        w: 8.0,
+                        h: 8.0,
+                    })
+                }
             }
         }
 
-        let mut dy = vy;
-        while 0.001 <= f32::abs(dy) {
-            let sign = if 0.0 < dy { 1.0 } else { -1.0 };
-            let stride = sign * f32::min(1.0, f32::abs(dy));
-            let py = self.position.y + stride;
-            let cx = (self.position.x.floor() / 8.0) as i32;
-            let cy = (py / 8.0).floor() as i32;
-            let cell = world::getCell(cx, cy);
-            if cell == 0 {
-                dy -= stride;
-                self.position.y = py;
-            } else {
-                self.velocity.y = 0.0;
-                break;
+        let mut aabb = AABB {
+            x: self.position.x,
+            y: self.position.y,
+            w: 8.0,
+            h: 8.0,
+        };
+
+        // 垂直方向に衝突判定
+        if vy != 0.0 {
+            aabb = aabb.translate(0.0, vy);
+            for wall in walls.iter() {
+                if aabb.collesion(*wall) {
+                    aabb.y = if 0.0 < vy {
+                        f32::min(aabb.y + aabb.h, wall.y) - aabb.h
+                    } else {
+                        f32::max(aabb.y, wall.b())
+                    };
+                    self.velocity.y = 0.0;
+                }
             }
         }
+
+        // 水平方向に衝突判定
+        if vx != 0.0 {
+            aabb = aabb.translate(vx, 0.0);
+            for wall in walls.iter() {
+                if aabb.collesion(*wall) {
+                    aabb.x = if 0.0 < vx {
+                        f32::min(aabb.x + aabb.w, wall.x) - aabb.w
+                    } else {
+                        f32::max(aabb.x, wall.r())
+                    };
+                    self.velocity.x = 0.0;
+                }
+            }
+        }
+
+        self.position.x = aabb.x;
+        self.position.y = aabb.y;
     }
 
     pub fn jump(&mut self) {
-        self.pose = Pose::Lie;
+        self.pose = Pose::Stand;
         self.velocity.y = -JUMP_VELOCITY
     }
 

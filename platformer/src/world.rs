@@ -22,7 +22,7 @@ const WORLD: &str = r#################################"
 ###              ##############
 ###          ##################
 ###############################
-#                             #
+###############################
 #                             #
 #                             #
 #                             #
@@ -47,7 +47,7 @@ const WORLD: &str = r#################################"
 
 pub fn getCell(x: i32, y: i32) -> u32 {
     if 0 <= x && x < WORLD_WIDTH as i32 && 0 <= y && y < WORLD_HEIGHT as i32 {
-        let i = (WORLD_WIDTH as i32 * y + (x + 1)) as usize;
+        let i = (WORLD_WIDTH as i32 * y + x) as usize;
         let s = WORLD[i..(i + 1)].to_string();
         if s == "#" {
             return 1;
@@ -55,7 +55,17 @@ pub fn getCell(x: i32, y: i32) -> u32 {
             return 0;
         }
     } else {
-        return 0;
+        return 100;
+    }
+}
+
+pub fn getC(x: i32, y: i32) -> String {
+    if 0 <= x && x < WORLD_WIDTH as i32 && 0 <= y && y < WORLD_HEIGHT as i32 {
+        let i = (WORLD_WIDTH as i32 * y + x) as usize;
+        let s = WORLD[i..(i + 1)].to_string();
+        return s;
+    } else {
+        return "OUT".to_string();
     }
 }
 
