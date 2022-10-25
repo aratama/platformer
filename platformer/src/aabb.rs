@@ -37,6 +37,15 @@ impl AABB {
         (self.x < b.r() && self.r() > b.x) && (self.y < b.b() && self.b() > b.y)
     }
 
+    pub fn collections(&self, walls: &Vec<AABB>) -> bool {
+        for wall in walls.iter() {
+            if self.collesion(*wall) {
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn translate(&self, dx: f32, dy: f32) -> AABB {
         AABB {
             x: self.x + dx,

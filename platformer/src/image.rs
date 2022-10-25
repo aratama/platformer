@@ -1,4 +1,5 @@
 pub mod fruit;
+pub mod jump;
 pub mod lie;
 pub mod lookup;
 pub mod player;

@@ -1,5 +1,6 @@
 use crate::aabb::AABB;
 use crate::graphics::Graphics;
+use crate::image::jump::JUMP_IMAGE;
 use crate::image::lie::LIE_IMAGE;
 use crate::image::lookup::LOOKUP_IMAGE;
 use crate::image::Image;
@@ -12,6 +13,7 @@ const MAX_VELOCITY: f32 = 100.0;
 const JUMP_VELOCITY: f32 = 2.5;
 const WALK_VELOCITY: f32 = 1.0;
 const CRAWL_VELOCITY: f32 = 0.25;
+const JUMP_MARGIN: f32 = 0.3;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub enum Direction {
@@ -63,10 +65,14 @@ impl Body {
                 wasm4::BLIT_FLIP_X
             };
 
-        let i: Image = match self.pose {
-            Pose::Stand => self.image,
-            Pose::Lie => LIE_IMAGE,
-            Pose::LookUp => LOOKUP_IMAGE,
+        let i: Image = if self.is_grounded() {
+            match self.pose {
+                Pose::Stand => self.image,
+                Pose::Lie => LIE_IMAGE,
+                Pose::LookUp => LOOKUP_IMAGE,
+            }
+        } else {
+            JUMP_IMAGE
         };
         let x = (4.0 - i.width as f32 * 0.5 + self.position.x.floor()) as i32;
         let y = (8.0 - i.height as f32 + self.position.y.floor()) as i32;
@@ -96,14 +102,25 @@ impl Body {
         }
     }
 
-    pub fn delta(&mut self, vx: f32, vy: f32) {
-        // 壁となるAABBを集める
-        let mut walls = vec![];
+    pub fn is_grounded(&self) -> bool {
+        let walls = self.get_walls();
+        let aabb = AABB {
+            x: self.position.x,
+            y: self.position.y,
+            w: 8.0,
+            h: 8.0 + JUMP_MARGIN,
+        };
+        aabb.collections(&walls)
+    }
+
+    fn get_walls(&self) -> Vec<AABB> {
         let px = (self.position.x / 8.0).floor() as i32;
         let py = (self.position.y / 8.0).floor() as i32;
-
-        for cx in (px - 1)..(px + 2) {
-            for cy in (py - 1)..(py + 2) {
+        let mut walls: Vec<AABB> = vec![];
+        // MARGIN = 1 の範囲だと、境界の部分に来たときに衝突判定が遅れて、壁と重なってしまう
+        const MARGIN: i32 = 2;
+        for cx in (px - MARGIN)..(px + 1 + MARGIN) {
+            for cy in (py - MARGIN)..(py + 1 + MARGIN) {
                 let cell = world::getCell(cx, cy);
                 if cell != 0 {
                     walls.push(AABB {
@@ -115,6 +132,12 @@ impl Body {
                 }
             }
         }
+        walls
+    }
+
+    fn delta(&mut self, vx: f32, vy: f32) {
+        // 壁となるAABBを集める
+        let walls = self.get_walls();
 
         let mut aabb = AABB {
             x: self.position.x,
@@ -158,8 +181,10 @@ impl Body {
     }
 
     pub fn jump(&mut self) {
-        self.pose = Pose::Stand;
-        self.velocity.y = -JUMP_VELOCITY
+        if self.is_grounded() {
+            self.pose = Pose::Stand;
+            self.velocity.y = -JUMP_VELOCITY
+        }
     }
 
     pub fn walk(&mut self, speed: f32, input: Inputs) {
