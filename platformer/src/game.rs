@@ -59,7 +59,7 @@ impl Game {
             frame_count: self.frame_count,
             debug: false,
             dx: 80 - self.player.position.x.floor() as i32,
-            dy: i32::max(8 * 2, 80 - self.player.position.y.floor() as i32),
+            dy: 80 - self.player.position.y.floor() as i32,
         };
         world::draw(graphics);
 
