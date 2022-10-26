@@ -53,12 +53,7 @@ pub struct World {
 
 impl World {
     pub fn new() -> World {
-        let mut cells = [0; WORLD_SIZE];
-
-        for x in cells.iter_mut() {
-            *x = 100;
-        }
-
+        let cells = [255; WORLD_SIZE];
         World { cells: cells }
     }
 
