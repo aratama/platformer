@@ -5,7 +5,7 @@ use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
 use crate::vector2::Vector2;
 use crate::wasm4;
-use crate::world;
+use crate::world::World;
 use fastrand::Rng;
 
 pub struct Game {
@@ -14,6 +14,7 @@ pub struct Game {
     player: Body,
     prev_gamepad: u8,
     fruits: std::vec::Vec<Body>,
+    world: World,
 }
 
 impl Game {
@@ -31,12 +32,15 @@ impl Game {
             FRUIT_IMAGE,
         )];
 
+        let world = World::new();
+
         Self {
             frame_count: 0,
             player,
             prev_gamepad: 0,
             fruits,
             rng,
+            world,
         }
     }
 
@@ -45,14 +49,16 @@ impl Game {
 
         self.frame_count += 1;
 
-        self.player.input(Inputs::new(gamepad, self.prev_gamepad));
+        self.player
+            .input(Inputs::new(gamepad, self.prev_gamepad), &self.world);
 
         self.prev_gamepad = unsafe { *wasm4::GAMEPAD1 };
 
-        self.player.update(Inputs::new(gamepad, self.prev_gamepad));
+        self.player
+            .update(Inputs::new(gamepad, self.prev_gamepad), &self.world);
 
         for fruit in self.fruits.iter_mut() {
-            fruit.update(Inputs::new(0, 0));
+            fruit.update(Inputs::new(0, 0), &self.world);
         }
 
         let graphics = Graphics {
@@ -61,12 +67,12 @@ impl Game {
             dx: 80 - self.player.position.x.floor() as i32,
             dy: 80 - self.player.position.y.floor() as i32,
         };
-        world::draw(graphics);
+        self.world.draw(graphics);
 
-        self.player.draw(graphics);
+        self.player.draw(graphics, &self.world);
 
         for fruit in self.fruits.iter() {
-            fruit.draw(graphics);
+            fruit.draw(graphics, &self.world);
         }
     }
 }

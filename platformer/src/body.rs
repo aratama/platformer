@@ -7,7 +7,7 @@ use crate::image::Image;
 use crate::input::Inputs;
 use crate::vector2::Vector2;
 use crate::wasm4;
-use crate::world;
+use crate::world::World;
 
 const MAX_VELOCITY: f32 = 100.0;
 const JUMP_VELOCITY: f32 = 2.5;
@@ -48,7 +48,7 @@ impl Body {
         }
     }
 
-    pub fn draw(&self, g: Graphics) {
+    pub fn draw(&self, g: Graphics, world: &World) {
         if g.debug {
             if (g.frame_count / 8) % 2 == 0 {
                 g.set_draw_color(0x20);
@@ -65,7 +65,7 @@ impl Body {
                 wasm4::BLIT_FLIP_X
             };
 
-        let i: Image = if self.is_grounded() {
+        let i: Image = if self.is_grounded(world) {
             match self.pose {
                 Pose::Stand => self.image,
                 Pose::Lie => LIE_IMAGE,
@@ -79,7 +79,7 @@ impl Body {
         g.draw(i, x, y, flags);
     }
 
-    pub fn update(&mut self, inputs: Inputs) {
+    pub fn update(&mut self, inputs: Inputs, world: &World) {
         let gravity: Vector2 = Vector2::new(0.0, 0.1);
 
         self.velocity.y = f32::max(
@@ -91,7 +91,7 @@ impl Body {
             f32::min(MAX_VELOCITY, self.velocity.x + gravity.x),
         );
 
-        self.delta(self.velocity.x, self.velocity.y);
+        self.delta(self.velocity.x, self.velocity.y, world);
 
         self.pose = if inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
             Pose::Lie
@@ -102,8 +102,8 @@ impl Body {
         }
     }
 
-    pub fn is_grounded(&self) -> bool {
-        let walls = self.get_walls();
+    pub fn is_grounded(&self, world: &World) -> bool {
+        let walls = self.get_walls(world);
         let aabb = AABB {
             x: self.position.x,
             y: self.position.y,
@@ -113,7 +113,7 @@ impl Body {
         aabb.collections(&walls)
     }
 
-    fn get_walls(&self) -> Vec<AABB> {
+    fn get_walls(&self, world: &World) -> Vec<AABB> {
         let px = (self.position.x / 8.0).floor() as i32;
         let py = (self.position.y / 8.0).floor() as i32;
         let mut walls: Vec<AABB> = vec![];
@@ -121,7 +121,7 @@ impl Body {
         const MARGIN: i32 = 2;
         for cx in (px - MARGIN)..(px + 1 + MARGIN) {
             for cy in (py - MARGIN)..(py + 1 + MARGIN) {
-                let cell = world::getCell(cx, cy);
+                let cell = world.getCell(cx, cy);
                 if cell != 0 {
                     walls.push(AABB {
                         x: 8.0 * cx as f32,
@@ -135,9 +135,9 @@ impl Body {
         walls
     }
 
-    fn delta(&mut self, vx: f32, vy: f32) {
+    fn delta(&mut self, vx: f32, vy: f32, world: &World) {
         // 壁となるAABBを集める
-        let walls = self.get_walls();
+        let walls = self.get_walls(world);
 
         let mut aabb = AABB {
             x: self.position.x,
@@ -180,8 +180,8 @@ impl Body {
         self.position.y = aabb.y;
     }
 
-    pub fn jump(&mut self) {
-        if self.is_grounded() {
+    pub fn jump(&mut self, world: &World) {
+        if self.is_grounded(world) {
             self.pose = Pose::Stand;
             self.velocity.y = -JUMP_VELOCITY
         }
@@ -197,7 +197,7 @@ impl Body {
             };
     }
 
-    pub fn input(&mut self, input: Inputs) {
+    pub fn input(&mut self, input: Inputs, world: &World) {
         if input.is_button_pressed(wasm4::BUTTON_LEFT) {
             self.direction = Direction::Left;
             self.walk(-1.0, input);
@@ -214,7 +214,7 @@ impl Body {
         }
 
         if input.is_button_just_pressed(wasm4::BUTTON_1) {
-            self.jump()
+            self.jump(world)
         }
     }
 }
