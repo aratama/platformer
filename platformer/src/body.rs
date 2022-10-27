@@ -3,6 +3,7 @@ use crate::graphics::Graphics;
 use crate::image::jump::JUMP_IMAGE;
 use crate::image::lie::LIE_IMAGE;
 use crate::image::lookup::LOOKUP_IMAGE;
+use crate::image::walk::WALK_ANIMATION;
 use crate::image::Image;
 use crate::input::Inputs;
 use crate::vector2::Vector2;
@@ -70,7 +71,8 @@ impl Body {
                 wasm4::BLIT_FLIP_X
             };
 
-        let i: Image = if self.is_grounded(world) {
+        let grounded = self.is_grounded(world);
+        let i: Image = if grounded {
             match self.pose {
                 Pose::Stand => self.image,
                 Pose::Lie => LIE_IMAGE,
@@ -81,7 +83,12 @@ impl Body {
         };
         let x = (4.0 - i.width as f32 * 0.5 + self.position.x.floor()) as i32;
         let y = (8.0 - i.height as f32 + self.position.y.floor()) as i32;
-        g.draw(i, x, y, flags);
+
+        if grounded && 0.1 < f32::abs(self.velocity.x) {
+            g.animate(WALK_ANIMATION, x, y, flags, 5);
+        } else {
+            g.draw(i, x, y, flags);
+        }
     }
 
     pub fn update(&mut self, inputs: Inputs, world: &World) {
