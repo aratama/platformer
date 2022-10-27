@@ -7,7 +7,7 @@ use crate::image::Image;
 use crate::input::Inputs;
 use crate::vector2::Vector2;
 use crate::wasm4;
-use crate::world::World;
+use crate::world::{World, CELL_SIZE};
 
 const MAX_VELOCITY: f32 = 100.0;
 const JUMP_VELOCITY: f32 = 2.5;
@@ -55,7 +55,12 @@ impl Body {
             } else {
                 g.set_draw_color(0x10);
             }
-            g.rect(self.position.x as i32, self.position.y as i32, 8, 8);
+            g.rect(
+                self.position.x as i32,
+                self.position.y as i32,
+                CELL_SIZE,
+                CELL_SIZE,
+            );
         }
 
         let flags = wasm4::BLIT_2BPP
@@ -107,15 +112,15 @@ impl Body {
         let aabb = AABB {
             x: self.position.x,
             y: self.position.y,
-            w: 8.0,
-            h: 8.0 + JUMP_MARGIN,
+            w: CELL_SIZE as f32,
+            h: CELL_SIZE as f32 + JUMP_MARGIN,
         };
         aabb.collections(&walls)
     }
 
     fn get_walls(&self, world: &World) -> Vec<AABB> {
-        let px = (self.position.x / 8.0).floor() as i32;
-        let py = (self.position.y / 8.0).floor() as i32;
+        let px = (self.position.x / CELL_SIZE as f32).floor() as i32;
+        let py = (self.position.y / CELL_SIZE as f32).floor() as i32;
         let mut walls: Vec<AABB> = vec![];
         // MARGIN = 1 の範囲だと、境界の部分に来たときに衝突判定が遅れて、壁と重なってしまう
         const MARGIN: i32 = 2;
@@ -124,10 +129,10 @@ impl Body {
                 let cell = world.get_cell(cx, cy);
                 if cell != 0 {
                     walls.push(AABB {
-                        x: 8.0 * cx as f32,
-                        y: 8.0 * cy as f32,
-                        w: 8.0,
-                        h: 8.0,
+                        x: CELL_SIZE as f32 * cx as f32,
+                        y: CELL_SIZE as f32 * cy as f32,
+                        w: CELL_SIZE as f32,
+                        h: CELL_SIZE as f32,
                     })
                 }
             }
@@ -142,8 +147,8 @@ impl Body {
         let mut aabb = AABB {
             x: self.position.x,
             y: self.position.y,
-            w: 8.0,
-            h: 8.0,
+            w: CELL_SIZE as f32,
+            h: CELL_SIZE as f32,
         };
 
         // 垂直方向に衝突判定

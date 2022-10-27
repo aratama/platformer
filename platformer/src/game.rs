@@ -64,14 +64,10 @@ impl Game {
         let graphics = Graphics {
             frame_count: self.frame_count,
             debug: false,
-            dx: 80 - self.player.position.x.floor() as i32,
-            dy: 80 - self.player.position.y.floor() as i32,
+            dx: wasm4::SCREEN_SIZE as i32 / 2 - self.player.position.x.floor() as i32,
+            dy: wasm4::SCREEN_SIZE as i32 / 2 - self.player.position.y.floor() as i32,
         };
-        self.world.draw(
-            graphics,
-            (self.player.position.y / 8.0 - 12.0).floor() as u32,
-            (self.player.position.y / 8.0 + 12.0).floor() as u32,
-        );
+        self.world.draw(graphics);
 
         self.player.draw(graphics, &self.world);
 
