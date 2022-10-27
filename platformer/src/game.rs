@@ -12,6 +12,7 @@ pub struct Game {
     rng: Rng,
     frame_count: u32,
     player: Body,
+    playerLookUp: i32,
     prev_gamepad: u8,
     fruits: std::vec::Vec<Body>,
     world: World,
@@ -37,6 +38,7 @@ impl Game {
         Self {
             frame_count: 0,
             player,
+            playerLookUp: 0,
             prev_gamepad: 0,
             fruits,
             rng,
@@ -49,13 +51,19 @@ impl Game {
 
         self.frame_count += 1;
 
-        self.player
-            .input(Inputs::new(gamepad, self.prev_gamepad), &self.world);
+        let inputs = Inputs::new(gamepad, self.prev_gamepad);
+
+        self.player.input(inputs, &self.world);
 
         self.prev_gamepad = unsafe { *wasm4::GAMEPAD1 };
 
-        self.player
-            .update(Inputs::new(gamepad, self.prev_gamepad), &self.world);
+        self.player.update(inputs, &self.world);
+
+        if self.player.is_grounded(&self.world) && inputs.is_button_pressed(wasm4::BUTTON_UP) {
+            self.playerLookUp = i32::min(60, self.playerLookUp + 2);
+        } else {
+            self.playerLookUp = i32::max(0, self.playerLookUp - 4);
+        }
 
         for fruit in self.fruits.iter_mut() {
             fruit.update(Inputs::new(0, 0), &self.world);
@@ -65,7 +73,8 @@ impl Game {
             frame_count: self.frame_count,
             debug: false,
             dx: wasm4::SCREEN_SIZE as i32 / 2 - self.player.position.x.floor() as i32,
-            dy: wasm4::SCREEN_SIZE as i32 / 2 - self.player.position.y.floor() as i32,
+            dy: wasm4::SCREEN_SIZE as i32 / 2 - self.player.position.y.floor() as i32
+                + self.playerLookUp,
         };
         self.world.draw(graphics);
 
