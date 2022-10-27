@@ -67,7 +67,11 @@ impl Game {
             dx: 80 - self.player.position.x.floor() as i32,
             dy: 80 - self.player.position.y.floor() as i32,
         };
-        self.world.draw(graphics);
+        self.world.draw(
+            graphics,
+            (self.player.position.y / 8.0 - 12.0).floor() as u32,
+            (self.player.position.y / 8.0 + 12.0).floor() as u32,
+        );
 
         self.player.draw(graphics, &self.world);
 

@@ -23,9 +23,9 @@ impl World {
         }
     }
 
-    pub fn draw(&self, g: Graphics) {
-        for y in 0..WORLD_HEIGHT {
-            for x in 0..WORLD_WIDTH {
+    pub fn draw(&self, g: Graphics, minY: u32, maxY: u32) {
+        for y in u32::max(0, minY)..u32::min(maxY, WORLD_HEIGHT) {
+            for x in 0..(WORLD_WIDTH) {
                 let cell = self.get_cell(x as i32, y as i32);
                 if cell != 0 {
                     set_draw_color(0x44);
