@@ -121,7 +121,7 @@ impl Body {
         const MARGIN: i32 = 2;
         for cx in (px - MARGIN)..(px + 1 + MARGIN) {
             for cy in (py - MARGIN)..(py + 1 + MARGIN) {
-                let cell = world.getCell(cx, cy);
+                let cell = world.get_cell(cx, cy);
                 if cell != 0 {
                     walls.push(AABB {
                         x: 8.0 * cx as f32,
