@@ -85,10 +85,10 @@ impl Game {
         };
         self.world.draw(graphics);
 
-        self.player.draw(graphics, &self.world);
+        self.player.draw(graphics, &self.world, &inputs);
 
         for fruit in self.fruits.iter() {
-            fruit.draw(graphics, &self.world);
+            fruit.draw(graphics, &self.world, &inputs);
         }
     }
 }

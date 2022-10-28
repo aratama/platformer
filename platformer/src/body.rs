@@ -12,9 +12,9 @@ use crate::world::{World, CELL_SIZE};
 
 const MAX_VELOCITY: f32 = 100.0;
 const JUMP_VELOCITY: f32 = 2.5;
-const WALK_VELOCITY: f32 = 1.0;
-const CRAWL_VELOCITY: f32 = 0.25;
+const WALK_ACCELERATION: f32 = 0.2;
 const JUMP_MARGIN: f32 = 0.3;
+const MAX_HORIZONTAL_SPEED: f32 = 2.0;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub enum Direction {
@@ -49,7 +49,7 @@ impl Body {
         }
     }
 
-    pub fn draw(&self, g: Graphics, world: &World) {
+    pub fn draw(&self, g: Graphics, world: &World, inputs: &Inputs) {
         if g.debug {
             if (g.frame_count / 8) % 2 == 0 {
                 g.set_draw_color(0x20);
@@ -84,7 +84,9 @@ impl Body {
         let x = (4.0 - i.width as f32 * 0.5 + self.position.x.floor()) as i32;
         let y = (8.0 - i.height as f32 + self.position.y.floor()) as i32;
 
-        if grounded && 0.1 < f32::abs(self.velocity.x) {
+        if grounded && inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
+            g.draw(LIE_IMAGE, x, y, flags);
+        } else if grounded && 0.1 < f32::abs(self.velocity.x) {
             g.animate(WALK_ANIMATION, x, y, flags, 5);
         } else {
             g.draw(i, x, y, flags);
@@ -199,30 +201,41 @@ impl Body {
         }
     }
 
-    pub fn walk(&mut self, speed: f32, input: Inputs) {
-        self.velocity.x = WALK_VELOCITY
-            * speed
-            * if input.is_button_pressed(wasm4::BUTTON_DOWN) {
-                CRAWL_VELOCITY
-            } else {
-                1.0
-            };
+    pub fn walk(&mut self, speed: f32) {
+        // 吹き飛ばされた場合など、すでにMAX_HORIZONTAL_SPEEDを超える速度が出ている場合は、
+        // それ以上加速はしないものの、MAX_HORIZONTAL_SPEED以下に抑えることもしない
+        if self.velocity.x < MAX_HORIZONTAL_SPEED && -MAX_HORIZONTAL_SPEED < self.velocity.x {
+            // 歩きで加速する場合はMAX_HORIZONTAL_SPEEDを超えない
+            self.velocity.x += f32::max(
+                -MAX_HORIZONTAL_SPEED,
+                f32::min(MAX_HORIZONTAL_SPEED, WALK_ACCELERATION * speed),
+            );
+        }
     }
 
     pub fn input(&mut self, input: Inputs, world: &World) {
-        if input.is_button_pressed(wasm4::BUTTON_LEFT) {
-            self.direction = Direction::Left;
-            self.walk(-1.0, input);
-        }
-        if input.is_button_pressed(wasm4::BUTTON_RIGHT) {
-            self.direction = Direction::Right;
-            self.walk(1.0, input);
+        let grounded = self.is_grounded(&world);
+        let speed_scale = if grounded { 1.0 } else { 0.4 };
+
+        if !input.is_button_pressed(wasm4::BUTTON_DOWN) {
+            if input.is_button_pressed(wasm4::BUTTON_LEFT) {
+                if grounded {
+                    self.direction = Direction::Left;
+                }
+                self.walk(-speed_scale);
+            }
+            if input.is_button_pressed(wasm4::BUTTON_RIGHT) {
+                if grounded {
+                    self.direction = Direction::Right;
+                }
+                self.walk(speed_scale);
+            }
         }
 
         if !input.is_button_pressed(wasm4::BUTTON_LEFT)
             && !input.is_button_pressed(wasm4::BUTTON_RIGHT)
         {
-            self.velocity.x = 0.0;
+            self.velocity.x = self.velocity.x * 0.8;
         }
 
         if input.is_button_just_pressed(wasm4::BUTTON_1) {
