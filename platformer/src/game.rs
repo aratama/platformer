@@ -5,7 +5,7 @@ use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
 use crate::vector2::Vector2;
 use crate::wasm4;
-use crate::world::World;
+use crate::world::{World, CELL_SIZE};
 use fastrand::Rng;
 
 const MIN_PLAYER_LOOKUP: i32 = -60;
@@ -25,7 +25,11 @@ impl Game {
     pub fn new() -> Self {
         let rng = Rng::with_seed(235);
 
-        let player = Body::new("player", Vector2::new(8.0 * 5.0, 8.0 * 4.0), PLAYER_IMAGE);
+        let player = Body::new(
+            "player",
+            Vector2::new(CELL_SIZE as f32 * 13.0, CELL_SIZE as f32 * 236.0),
+            PLAYER_IMAGE,
+        );
 
         let fruits = vec![Body::new(
             "fruit",

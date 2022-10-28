@@ -30,7 +30,7 @@ impl World {
         let max_x = u32::min(min_x + (160 / CELL_SIZE) + 1, WORLD_WIDTH);
         let min_y = u32::min(i32::max(0, -g.dy) as u32 / CELL_SIZE, WORLD_HEIGHT);
         let max_y = u32::min(min_y + (160 / CELL_SIZE) + 1, WORLD_HEIGHT);
-        for y in min_y..max_y {
+        for y in min_y..(max_y + 1) {
             for x in min_x..max_x {
                 let cell = self.get_cell(x as i32, y as i32);
                 if cell != 0 {
