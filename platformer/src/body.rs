@@ -35,10 +35,18 @@ pub struct Body {
     pub image: Image,
     pub direction: Direction,
     pub pose: Pose,
+    pub body_width: f32,
+    pub body_height: f32,
 }
 
 impl Body {
-    pub fn new(name: &'static str, position: Vector2, image: Image) -> Self {
+    pub fn new(
+        name: &'static str,
+        position: Vector2,
+        image: Image,
+        body_width: f32,
+        body_height: f32,
+    ) -> Self {
         Self {
             name,
             position,
@@ -46,6 +54,8 @@ impl Body {
             image,
             direction: Direction::Right,
             pose: Pose::Stand,
+            body_width,
+            body_height,
         }
     }
 
@@ -59,8 +69,8 @@ impl Body {
             g.rect(
                 self.position.x as i32,
                 self.position.y as i32,
-                CELL_SIZE,
-                CELL_SIZE,
+                self.body_width.floor() as u32,
+                self.body_height.floor() as u32,
             );
         }
 
@@ -81,8 +91,9 @@ impl Body {
         } else {
             JUMP_IMAGE
         };
-        let x = (4.0 - i.width as f32 * 0.5 + self.position.x.floor()) as i32;
-        let y = (8.0 - i.height as f32 + self.position.y.floor()) as i32;
+
+        let x = (self.body_width * 0.5 - i.width as f32 * 0.5 + self.position.x.floor()) as i32;
+        let y = (self.body_height - i.height as f32 + self.position.y.floor()) as i32;
 
         if grounded && inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
             g.draw(LIE_IMAGE, x, y, flags);
@@ -121,8 +132,8 @@ impl Body {
         let aabb = AABB {
             x: self.position.x,
             y: self.position.y,
-            w: CELL_SIZE as f32,
-            h: CELL_SIZE as f32 + JUMP_MARGIN,
+            w: self.body_width,
+            h: self.body_height + JUMP_MARGIN,
         };
         aabb.collections(&walls)
     }
@@ -156,8 +167,8 @@ impl Body {
         let mut aabb = AABB {
             x: self.position.x,
             y: self.position.y,
-            w: CELL_SIZE as f32,
-            h: CELL_SIZE as f32,
+            w: self.body_width,
+            h: self.body_height,
         };
 
         // 垂直方向に衝突判定

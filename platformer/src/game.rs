@@ -27,8 +27,10 @@ impl Game {
 
         let player = Body::new(
             "player",
-            Vector2::new(CELL_SIZE as f32 * 13.0, CELL_SIZE as f32 * 236.0),
+            Vector2::new(CELL_SIZE as f32 * 13.0, CELL_SIZE as f32 * 235.0),
             PLAYER_IMAGE,
+            6.0,
+            12.0,
         );
 
         let fruits = vec![Body::new(
@@ -38,6 +40,8 @@ impl Game {
                 rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
             ),
             FRUIT_IMAGE,
+            CELL_SIZE as f32,
+            CELL_SIZE as f32,
         )];
 
         let world = World::new();
