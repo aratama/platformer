@@ -1,3 +1,6 @@
+pub mod bg;
+pub mod board_right;
+pub mod board_up;
 pub mod climb;
 pub mod fruit;
 pub mod jump;

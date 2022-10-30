@@ -11,7 +11,7 @@ use crate::image::Image;
 use crate::input::Inputs;
 use crate::vector2::Vector2;
 use crate::wasm4;
-use crate::world::{World, CELL_SIZE};
+use crate::world::{Block, World, CELL_SIZE};
 
 // 重力
 const GRAVITY_X: f32 = 0.0;
@@ -203,8 +203,7 @@ impl Body {
         const MARGIN: i32 = 2;
         for cx in (px - MARGIN)..(px + 1 + MARGIN) {
             for cy in (py - MARGIN)..(py + 1 + MARGIN) {
-                let cell = world.get_cell(cx, cy);
-                if cell != 0 {
+                if !world.is_empty(cx, cy) {
                     walls.push(AABB {
                         x: CELL_SIZE as f32 * cx as f32,
                         y: CELL_SIZE as f32 * cy as f32,
@@ -404,16 +403,12 @@ impl Body {
             let next_cell_cx = current_cell_cx + self.direction.delta(); // よじ登る対象のブロック位置
             let next_cell_cy = current_cell_cy;
 
-            let current_cell = world.get_cell(current_cell_cx, current_cell_cy); // プレイヤーがいるブロック
-            let next_cell = world.get_cell(next_cell_cx, current_cell_cy); // よじ登る対象のブロック。これが空の場合はよじ登れない
-            let up_next_cell = world.get_cell(next_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの上のブロック。これが空ならよじ登れない
-            let up_cell = world.get_cell(current_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの手前上のブロック。これが空ならよじ登れる
-            let down_cell = world.get_cell(current_cell_cx, current_cell_cy + 1); // 現在位置の下のブロック。これが空ならよじ登れる。この判定をしないと、落ちるおそれのない階段状の地形でも毎回掴みが発生してしまう
-            let cells_ok = current_cell == 0
-                && next_cell != 0
-                && up_next_cell == 0
-                && up_cell == 0
-                && down_cell == 0; //判定対象の4つのブロックの状態が有効かどうか
+            let current_cell = world.is_empty(current_cell_cx, current_cell_cy); // プレイヤーがいるブロック
+            let next_cell = world.is_empty(next_cell_cx, current_cell_cy); // よじ登る対象のブロック。これが空の場合はよじ登れない
+            let up_next_cell = world.is_empty(next_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの上のブロック。これが空ならよじ登れない
+            let up_cell = world.is_empty(current_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの手前上のブロック。これが空ならよじ登れる
+            let down_cell = world.is_empty(current_cell_cx, current_cell_cy + 1); // 現在位置の下のブロック。これが空ならよじ登れる。この判定をしないと、落ちるおそれのない階段状の地形でも毎回掴みが発生してしまう
+            let cells_ok = current_cell && !next_cell && up_next_cell && up_cell && down_cell; //判定対象の4つのブロックの状態が有効かどうか
 
             if !grounded
                 && 0.0 < self.velocity.y // 落下中のみ。この判定をしないと、小さな山を、壁をこすりながらジャンプしたときに掴みが発動してしまう  

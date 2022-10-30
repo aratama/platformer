@@ -1,5 +1,6 @@
 use crate::body::Body;
 use crate::graphics::Graphics;
+use crate::image::bg::{BG, BG_FLAGS, BG_HEIGHT, BG_WIDTH};
 use crate::image::fruit::FRUIT_IMAGE;
 use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
@@ -100,15 +101,31 @@ impl Game {
         }
 
         // renders
-
         let player_center = self.player.center();
+        let dx = wasm4::SCREEN_SIZE as i32 / 2 - player_center.x.floor() as i32;
+        let dy = wasm4::SCREEN_SIZE as i32 / 2 - player_center.y.floor() as i32
+            + i32::max(0, self.player_lookup);
         let graphics = Graphics {
             frame_count: self.frame_count,
             debug: self.debug,
-            dx: wasm4::SCREEN_SIZE as i32 / 2 - player_center.x.floor() as i32,
-            dy: wasm4::SCREEN_SIZE as i32 / 2 - player_center.y.floor() as i32
-                + i32::max(0, self.player_lookup),
+            dx,
+            dy,
         };
+        // set_draw_color(0x4321);
+        // for y in (0..10) {
+        //     for x in (0..10) {
+        //         wasm4::blit(
+        //             &BG,
+        //             ((BG_WIDTH as i32 * x) as f32 + dx as f32 * 0.5).floor() as i32,
+        //             BG_HEIGHT as i32 * y,
+        //             BG_WIDTH,
+        //             BG_HEIGHT,
+        //             BG_FLAGS,
+        //         );
+        //     }
+        // }
+
+        set_draw_color(0x3210);
         self.world.draw(graphics);
 
         self.player.draw(graphics, &self.world, &inputs);
