@@ -8,5 +8,5 @@ const FRUIT_SPRITE: [u8; 16] = [
 pub static FRUIT_IMAGE: Image = Image {
     width: CELL_SIZE,
     height: CELL_SIZE,
-    data: &FRUIT_SPRITE,
+    frames: &[&FRUIT_SPRITE],
 };

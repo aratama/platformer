@@ -11,5 +11,5 @@ use crate::image::Image;
 pub static JUMP_IMAGE: Image = Image {
     width: JUMP_WIDTH,
     height: JUMP_HEIGHT,
-    data: &JUMP,
+    frames: &[&JUMP],
 };

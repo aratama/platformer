@@ -11,5 +11,5 @@ use crate::image::Image;
 pub static LIE_IMAGE: Image = Image {
     width: LIE_WIDTH,
     height: LIE_HEIGHT,
-    data: &LIE,
+    frames: &[&LIE],
 };

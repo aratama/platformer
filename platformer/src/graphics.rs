@@ -1,4 +1,4 @@
-use crate::image::{Animation, Image};
+use crate::image::Image;
 use crate::wasm4;
 
 #[derive(Clone, Copy, Default)]
@@ -18,8 +18,8 @@ impl Graphics {
         image.draw(x + self.dx, y + self.dy, flags);
     }
 
-    pub fn animate(&self, animation: Animation, x: i32, y: i32, flags: u32, speed: u32) {
-        animation.draw(x + self.dx, y + self.dy, flags, self.frame_count, speed);
+    pub fn animate(&self, image: Image, x: i32, y: i32, flags: u32, speed: u32) {
+        image.animate(x + self.dx, y + self.dy, flags, self.frame_count, speed);
     }
 
     pub fn rect(&self, x: i32, y: i32, width: u32, height: u32) {

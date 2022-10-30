@@ -11,5 +11,5 @@ use crate::image::Image;
 pub static PLAYER_IMAGE: Image = Image {
     width: PLAYER_WIDTH,
     height: PLAYER_HEIGHT,
-    data: &PLAYER,
+    frames: &[&PLAYER],
 };

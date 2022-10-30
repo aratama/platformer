@@ -34,30 +34,11 @@ const WALK3: [u8; 32] = [
     0x17, 0x74, 0x16, 0x64, 0x15, 0x54, 0x3f, 0xfc, 0x3f, 0xfc, 0x1f, 0xf4, 0x05, 0x50, 0x04, 0x10,
 ];
 
-use crate::image::{Animation, Image};
+use crate::image::Image;
 pub const WALK_ANIMATION_WIDTH: u32 = 8;
 pub const WALK_ANIMATION_HEIGHT: u32 = 16;
-pub const WALK_ANIMATION: Animation = Animation {
-    frames: &[
-        Image {
-            width: WALK0_WIDTH,
-            height: WALK0_HEIGHT,
-            data: &WALK0,
-        },
-        Image {
-            width: WALK1_WIDTH,
-            height: WALK1_HEIGHT,
-            data: &WALK1,
-        },
-        Image {
-            width: WALK2_WIDTH,
-            height: WALK2_HEIGHT,
-            data: &WALK2,
-        },
-        Image {
-            width: WALK3_WIDTH,
-            height: WALK3_HEIGHT,
-            data: &WALK3,
-        },
-    ],
+pub const WALK_ANIMATION: Image = Image {
+    width: WALK1_WIDTH,
+    height: WALK1_HEIGHT,
+    frames: &[&WALK0, &WALK1, &WALK2, &WALK3],
 };

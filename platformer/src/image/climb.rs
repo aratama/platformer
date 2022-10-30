@@ -13,5 +13,5 @@ use crate::image::Image;
 pub static CLIMB_IMAGE: Image = Image {
     width: CLIMB_WIDTH,
     height: CLIMB_HEIGHT,
-    data: &CLIMB,
+    frames: &[&CLIMB],
 };

@@ -11,5 +11,5 @@ use crate::image::Image;
 pub static LOOKUP_IMAGE: Image = Image {
     width: LOOKUP_WIDTH,
     height: LOOKUP_HEIGHT,
-    data: &LOOKUP,
+    frames: &[&LOOKUP],
 };
