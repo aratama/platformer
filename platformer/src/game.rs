@@ -3,6 +3,7 @@ use crate::graphics::Graphics;
 use crate::image::fruit::FRUIT_IMAGE;
 use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
+use crate::palette::set_draw_color;
 use crate::vector2::Vector2;
 use crate::wasm4;
 use crate::world::{World, CELL_SIZE};
@@ -19,6 +20,7 @@ pub struct Game {
     prev_gamepad: u8,
     fruits: std::vec::Vec<Body>,
     world: World,
+    debug: bool,
 }
 
 impl Game {
@@ -58,10 +60,13 @@ impl Game {
             fruits,
             rng,
             world,
+            debug: false,
         }
     }
 
     pub fn update(&mut self) {
+        // updates
+
         let gamepad = unsafe { *wasm4::GAMEPAD1 };
 
         self.frame_count += 1;
@@ -84,10 +89,16 @@ impl Game {
             fruit.physical_update(Inputs::new(0, 0), &self.world);
         }
 
+        if inputs.is_button_just_pressed(wasm4::BUTTON_2) {
+            self.debug = !self.debug;
+        }
+
+        // renders
+
         let player_center = self.player.center();
         let graphics = Graphics {
             frame_count: self.frame_count,
-            debug: false,
+            debug: self.debug,
             dx: wasm4::SCREEN_SIZE as i32 / 2 - player_center.x.floor() as i32,
             dy: wasm4::SCREEN_SIZE as i32 / 2 - player_center.y.floor() as i32
                 + i32::max(0, self.player_lookup),
@@ -98,6 +109,19 @@ impl Game {
 
         for fruit in self.fruits.iter() {
             fruit.draw(graphics, &self.world, &inputs);
+        }
+
+        if self.debug {
+            set_draw_color(0x41);
+            wasm4::text(
+                format!(
+                    "{0: >04}, {1: >04}",
+                    self.player.position.x.floor(),
+                    self.player.position.y.floor()
+                ),
+                0,
+                0,
+            );
         }
     }
 }
