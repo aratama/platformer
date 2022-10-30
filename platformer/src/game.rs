@@ -27,8 +27,11 @@ impl Game {
     pub fn new() -> Self {
         let rng = Rng::with_seed(235);
 
-        let player_x = CELL_SIZE as f32 * 13.0;
-        let player_y = CELL_SIZE as f32 * 215.0;
+        // let player_x = CELL_SIZE as f32 * 13.0;
+        // let player_y = CELL_SIZE as f32 * 2.0;
+
+        let player_x = 213.0;
+        let player_y = 188.0;
 
         let player = Body::new(
             "player",
@@ -39,16 +42,18 @@ impl Game {
             12.0,
         );
 
-        let fruits = vec![Body::new(
-            "fruit",
-            Vector2::new(
-                rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
-                rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
-            ),
-            FRUIT_IMAGE,
-            CELL_SIZE as f32,
-            CELL_SIZE as f32,
-        )];
+        let fruits = vec![
+        //     Body::new(
+        //     "fruit",
+        //     Vector2::new(
+        //         rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
+        //         rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
+        //     ),
+        //     FRUIT_IMAGE,
+        //     CELL_SIZE as f32,
+        //     CELL_SIZE as f32,
+        // )
+        ];
 
         let world = World::new();
 
@@ -77,7 +82,8 @@ impl Game {
 
         self.prev_gamepad = unsafe { *wasm4::GAMEPAD1 };
 
-        self.player.physical_update(inputs, &self.world);
+        self.player
+            .physical_update(inputs.horizontal_acceralation() as i32, &self.world);
 
         if self.player.is_grounded(&self.world) && inputs.is_button_pressed(wasm4::BUTTON_UP) {
             self.player_lookup = i32::min(MAX_PLAYER_LOOKUP, self.player_lookup + 2);
@@ -86,7 +92,7 @@ impl Game {
         }
 
         for fruit in self.fruits.iter_mut() {
-            fruit.physical_update(Inputs::new(0, 0), &self.world);
+            fruit.physical_update(0, &self.world);
         }
 
         if inputs.is_button_just_pressed(wasm4::BUTTON_2) {

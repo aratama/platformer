@@ -49,6 +49,8 @@ const AIR_RESISTANCE_X: f32 = 1.0;
 // この値で落下中の終端速度も決まる
 const AIR_RESISTANCE_Y: f32 = 0.98;
 
+const CLING_MERGIN: f32 = 2.0;
+
 pub struct Body {
     pub name: &'static str,
 
@@ -116,9 +118,9 @@ impl Body {
      * プレイヤーキャラクターとしての操作は input メソッドで更新します
      * プレイヤーの状態によってはこの関数を呼ばないこともあります
      */
-    pub fn physical_update(&mut self, inputs: Inputs, world: &World) {
-        let gravity: Vector2 = Vector2::new(GRAVITY_X, GRAVITY_Y);
+    pub fn physical_update(&mut self, cling: i32, world: &World) {
         let grounded = self.is_grounded(world);
+        let gravity: Vector2 = Vector2::new(GRAVITY_X, GRAVITY_Y);
 
         // 重力加速度を加算
         self.velocity.y += gravity.y;
@@ -131,7 +133,17 @@ impl Body {
             } else {
                 AIR_RESISTANCE_X
             };
-        self.velocity.y = self.velocity.y * AIR_RESISTANCE_Y;
+
+        // 壁ずりおちの場合は空気抵抗が増えているように処理する
+        if 0.0 < self.velocity.y && 0 < cling && self.is_touching_right(CLING_MERGIN, world) {
+            self.velocity.y = self.velocity.y * 0.5;
+            self.direction = Direction::Right;
+        } else if 0.0 < self.velocity.y && cling < 0 && self.is_touching_left(CLING_MERGIN, world) {
+            self.velocity.y = self.velocity.y * 0.5;
+            self.direction = Direction::Left;
+        } else {
+            self.velocity.y = self.velocity.y * AIR_RESISTANCE_Y
+        };
 
         // 最大速度制限
         self.velocity.x = f32::max(-MAX_SPEED_X, f32::min(MAX_SPEED_X, self.velocity.x));
@@ -151,6 +163,28 @@ impl Body {
             y: self.position.y,
             w: self.body_width,
             h: self.body_height + JUMP_MARGIN,
+        };
+        aabb.collections(&walls)
+    }
+
+    pub fn is_touching_right(&self, margin: f32, world: &World) -> bool {
+        let walls = self.get_walls(world);
+        let aabb = AABB {
+            x: self.position.x,
+            y: self.position.y,
+            w: self.body_width + margin,
+            h: self.body_height,
+        };
+        aabb.collections(&walls)
+    }
+
+    pub fn is_touching_left(&self, margin: f32, world: &World) -> bool {
+        let walls = self.get_walls(world);
+        let aabb = AABB {
+            x: self.position.x - margin,
+            y: self.position.y,
+            w: self.body_width + margin,
+            h: self.body_height,
         };
         aabb.collections(&walls)
     }
@@ -271,7 +305,7 @@ impl Body {
                         self.position.y -= self.body_height as f32 * 0.5;
                         self.climbing = 0;
                         self.climbing_point = None;
-                        self.wait = 10;
+                        self.wait = 20;
                     }
                 }
 
@@ -299,6 +333,26 @@ impl Body {
                     self.velocity.y = -JUMP_ACCELERATION;
                     self.velocity.x = 1.0 * input.horizontal_acceralation();
                     self.climbing = 0;
+                }
+            } else if 0.0 < self.velocity.y
+                && input.is_button_pressed(wasm4::BUTTON_RIGHT)
+                && self.is_touching_right(CLING_MERGIN, world)
+            {
+                // 右ずり落ち
+                if input.is_button_just_pressed(wasm4::BUTTON_1) {
+                    self.velocity.y = -JUMP_ACCELERATION;
+                    self.velocity.x = -1.0;
+                    self.direction = Direction::Left;
+                }
+            } else if 0.0 < self.velocity.y
+                && input.is_button_pressed(wasm4::BUTTON_LEFT)
+                && self.is_touching_left(CLING_MERGIN, world)
+            {
+                // 左ずり落ち
+                if input.is_button_just_pressed(wasm4::BUTTON_1) {
+                    self.velocity.y = -JUMP_ACCELERATION;
+                    self.velocity.x = 1.0;
+                    self.direction = Direction::Right;
                 }
             } else {
                 // 左右移動
@@ -331,12 +385,17 @@ impl Body {
                 let (current_cell_cx, current_cell_cy) = self.get_current_cell(); // 現在のブロック位置
                 let next_cell_cx = current_cell_cx + self.direction.delta(); // よじ登る対象のブロック位置
                 let next_cell_cy = current_cell_cy;
+
+                let current_cell = world.get_cell(current_cell_cx, current_cell_cy); // プレイヤーがいるブロック
                 let next_cell = world.get_cell(next_cell_cx, current_cell_cy); // よじ登る対象のブロック。これが空の場合はよじ登れない
                 let up_next_cell = world.get_cell(next_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの上のブロック。これが空ならよじ登れない
                 let up_cell = world.get_cell(current_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの手前上のブロック。これが空ならよじ登れる
                 let down_cell = world.get_cell(current_cell_cx, current_cell_cy + 1); // 現在位置の下のブロック。これが空ならよじ登れる。この判定をしないと、落ちるおそれのない階段状の地形でも毎回掴みが発生してしまう
-                let cells_ok =
-                    next_cell != 0 && up_next_cell == 0 && up_cell == 0 && down_cell == 0; //判定対象の4つのブロックの状態が有効かどうか
+                let cells_ok = current_cell == 0
+                    && next_cell != 0
+                    && up_next_cell == 0
+                    && up_cell == 0
+                    && down_cell == 0; //判定対象の4つのブロックの状態が有効かどうか
                 let walk_button = input.direction();
 
                 if !grounded
