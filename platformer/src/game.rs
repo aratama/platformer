@@ -25,9 +25,13 @@ impl Game {
     pub fn new() -> Self {
         let rng = Rng::with_seed(235);
 
+        let player_x = CELL_SIZE as f32 * 13.0;
+        let player_y = CELL_SIZE as f32 * 215.0;
+
         let player = Body::new(
             "player",
-            Vector2::new(CELL_SIZE as f32 * 13.0, CELL_SIZE as f32 * 235.0),
+            // Vector2::new(CELL_SIZE as f32 * 13.0, CELL_SIZE as f32 * 235.0),
+            Vector2::new(player_x, player_y),
             PLAYER_IMAGE,
             6.0,
             12.0,
@@ -68,7 +72,7 @@ impl Game {
 
         self.prev_gamepad = unsafe { *wasm4::GAMEPAD1 };
 
-        self.player.update(inputs, &self.world);
+        self.player.physical_update(inputs, &self.world);
 
         if self.player.is_grounded(&self.world) && inputs.is_button_pressed(wasm4::BUTTON_UP) {
             self.player_lookup = i32::min(MAX_PLAYER_LOOKUP, self.player_lookup + 2);
@@ -77,14 +81,15 @@ impl Game {
         }
 
         for fruit in self.fruits.iter_mut() {
-            fruit.update(Inputs::new(0, 0), &self.world);
+            fruit.physical_update(Inputs::new(0, 0), &self.world);
         }
 
+        let player_center = self.player.center();
         let graphics = Graphics {
             frame_count: self.frame_count,
             debug: false,
-            dx: wasm4::SCREEN_SIZE as i32 / 2 - self.player.position.x.floor() as i32,
-            dy: wasm4::SCREEN_SIZE as i32 / 2 - self.player.position.y.floor() as i32
+            dx: wasm4::SCREEN_SIZE as i32 / 2 - player_center.x.floor() as i32,
+            dy: wasm4::SCREEN_SIZE as i32 / 2 - player_center.y.floor() as i32
                 + i32::max(0, self.player_lookup),
         };
         self.world.draw(graphics);

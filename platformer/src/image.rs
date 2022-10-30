@@ -1,3 +1,4 @@
+pub mod climb;
 pub mod fruit;
 pub mod jump;
 pub mod lie;

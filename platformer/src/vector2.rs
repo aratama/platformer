@@ -10,6 +10,10 @@ impl Vector2 {
     pub fn new(x: f32, y: f32) -> Vector2 {
         Vector2 { x, y }
     }
+
+    pub fn distance(&self, v: Vector2) -> f32 {
+        f32::sqrt(self.x * v.x + self.y * v.y)
+    }
 }
 
 impl ops::Add<Vector2> for Vector2 {

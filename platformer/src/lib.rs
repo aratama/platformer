@@ -19,6 +19,7 @@ mod aabb;
 // #[cfg(feature = "buddy-alloc")]
 mod alloc;
 mod body;
+mod direction;
 mod game;
 mod graphics;
 mod image;
