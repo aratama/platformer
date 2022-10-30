@@ -1,7 +1,7 @@
 use crate::aabb::AABB;
 use crate::direction::Direction;
 use crate::graphics::Graphics;
-use crate::image::climb::{CLIMB_IMAGE, CLIMB_WIDTH};
+use crate::image::climb::{CLIMB_HEIGHT, CLIMB_IMAGE, CLIMB_WIDTH};
 use crate::image::jump::JUMP_IMAGE;
 use crate::image::lie::LIE_IMAGE;
 use crate::image::lookup::LOOKUP_IMAGE;
@@ -381,54 +381,12 @@ impl Body {
                     self.velocity.y *= 0.1;
                 }
 
-                // よじ登り判定
-                let (current_cell_cx, current_cell_cy) = self.get_current_cell(); // 現在のブロック位置
-                let next_cell_cx = current_cell_cx + self.direction.delta(); // よじ登る対象のブロック位置
-                let next_cell_cy = current_cell_cy;
-
-                let current_cell = world.get_cell(current_cell_cx, current_cell_cy); // プレイヤーがいるブロック
-                let next_cell = world.get_cell(next_cell_cx, current_cell_cy); // よじ登る対象のブロック。これが空の場合はよじ登れない
-                let up_next_cell = world.get_cell(next_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの上のブロック。これが空ならよじ登れない
-                let up_cell = world.get_cell(current_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの手前上のブロック。これが空ならよじ登れる
-                let down_cell = world.get_cell(current_cell_cx, current_cell_cy + 1); // 現在位置の下のブロック。これが空ならよじ登れる。この判定をしないと、落ちるおそれのない階段状の地形でも毎回掴みが発生してしまう
-                let cells_ok = current_cell == 0
-                    && next_cell != 0
-                    && up_next_cell == 0
-                    && up_cell == 0
-                    && down_cell == 0; //判定対象の4つのブロックの状態が有効かどうか
-                let walk_button = input.direction();
-
-                if !grounded
-                    && 0.0 < self.velocity.y // 落下中のみ。この判定をしないと、小さな山を、壁をこすりながらジャンプしたときに掴みが発動してしまう  
-                    && walk_button != None
-                    && cells_ok
-                    && (match self.climbing_point {
-                        None => true,
-                        Some(p) => true,
-                    })
-                {
-                    self.climbing = input.horizontal_acceralation() as i32;
-                    self.climbing_point =
-                        Some(Vector2::new(current_cell_cx as f32, current_cell_cy as f32));
-                    self.position.x = (next_cell_cx * CELL_SIZE as i32) as f32
-                        + if 0.0 < input.horizontal_acceralation() {
-                            -self.body_width
-                        } else {
-                            (CELL_SIZE as i32) as f32
-                        };
-                    self.position.y =
-                        (next_cell_cy * CELL_SIZE as i32) as f32 - self.body_height * 0.5;
-
-                    self.velocity.x = 0.0;
-                    self.velocity.y = 0.0;
-                }
-
                 // 掴みからのジャンプ
-                if self.climbing_point != None && input.is_button_just_pressed(wasm4::BUTTON_1) {
-                    self.climbing_point = None;
-                    self.velocity.x = 0.0;
-                    self.velocity.y = 0.0;
-                }
+                // if self.climbing_point != None && input.is_button_just_pressed(wasm4::BUTTON_1) {
+                //     self.climbing_point = None;
+                //     self.velocity.x = 0.0;
+                //     self.velocity.y = 0.0;
+                // }
 
                 // 現在の掴まり位置から十分離れると、その位置に再度掴まれるようになる
                 // match self.climbing_point {
@@ -439,6 +397,46 @@ impl Body {
                 //         }
                 //     }
                 // }
+            }
+
+            // よじ登り判定
+            let (current_cell_cx, current_cell_cy) = self.get_current_cell(); // 現在のブロック位置
+            let next_cell_cx = current_cell_cx + self.direction.delta(); // よじ登る対象のブロック位置
+            let next_cell_cy = current_cell_cy;
+
+            let current_cell = world.get_cell(current_cell_cx, current_cell_cy); // プレイヤーがいるブロック
+            let next_cell = world.get_cell(next_cell_cx, current_cell_cy); // よじ登る対象のブロック。これが空の場合はよじ登れない
+            let up_next_cell = world.get_cell(next_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの上のブロック。これが空ならよじ登れない
+            let up_cell = world.get_cell(current_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの手前上のブロック。これが空ならよじ登れる
+            let down_cell = world.get_cell(current_cell_cx, current_cell_cy + 1); // 現在位置の下のブロック。これが空ならよじ登れる。この判定をしないと、落ちるおそれのない階段状の地形でも毎回掴みが発生してしまう
+            let cells_ok = current_cell == 0
+                && next_cell != 0
+                && up_next_cell == 0
+                && up_cell == 0
+                && down_cell == 0; //判定対象の4つのブロックの状態が有効かどうか
+
+            if !grounded
+                && 0.0 < self.velocity.y // 落下中のみ。この判定をしないと、小さな山を、壁をこすりながらジャンプしたときに掴みが発動してしまう  
+                && input.direction() != None
+                && cells_ok
+                && (match self.climbing_point {
+                    None => true,
+                    Some(p) => true,
+                })
+            {
+                self.climbing = input.horizontal_acceralation() as i32;
+                self.climbing_point =
+                    Some(Vector2::new(current_cell_cx as f32, current_cell_cy as f32));
+                self.position.x = (next_cell_cx * CELL_SIZE as i32) as f32
+                    + if self.direction == Direction::Right {
+                        -self.body_width
+                    } else {
+                        (CELL_SIZE as i32) as f32
+                    };
+                self.position.y = (next_cell_cy * CELL_SIZE as i32) as f32 - self.body_height * 0.5;
+
+                self.velocity.x = 0.0;
+                self.velocity.y = 0.0;
             }
         }
 
@@ -479,10 +477,13 @@ impl Body {
         let y = (self.body_height - i.height as f32 + self.position.y.floor()) as i32;
 
         if self.climbing != 0 {
-            if 0 < self.climbing {
-                g.draw(CLIMB_IMAGE, x, y + 2, flags);
+            let x = (self.position.x).floor() as i32;
+            let y = (self.body_height - CLIMB_HEIGHT as f32 + self.position.y.floor()) as i32;
+            if self.direction == Direction::Right {
+                // TODO: refactor
+                g.draw(CLIMB_IMAGE, x - 2, y + 2, flags);
             } else {
-                g.draw(CLIMB_IMAGE, x - CELL_SIZE as i32, y + 2, flags);
+                g.draw(CLIMB_IMAGE, x - 8, y + 2, flags);
             }
         } else if grounded && inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
             g.draw(LIE_IMAGE, x, y, flags);
