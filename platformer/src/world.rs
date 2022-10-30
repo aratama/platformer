@@ -46,7 +46,7 @@ impl World {
     }
 
     pub fn is_empty(&self, x: i32, y: i32) -> bool {
-        if 0 <= x && x <= self.width as i32 && 0 <= y && y < self.height as i32 {
+        if 0 <= x && x < self.width as i32 && 0 <= y && y < self.height as i32 {
             let i = (WORLD_WIDTH as i32 * y + x) as usize;
             let s = WORLD[i..(i + 1)].to_string();
             if s == "#" {
@@ -55,24 +55,24 @@ impl World {
                 return true;
             }
         } else {
-            return false;
+            return true;
         }
     }
 
     pub fn draw(&self, g: Graphics) {
-        let min_x = u32::min(
+        let min_x = u32::max(
+            0,
             // 看板のように基準位置より右に描くものがあるので、 - CELL_SIZE で少し広めにとる
             i32::max(0, -g.dx - CELL_SIZE as i32) as u32 / CELL_SIZE,
-            self.width as u32,
         );
         let max_x = u32::min(
             min_x + (wasm4::SCREEN_SIZE / CELL_SIZE) + 2,
             self.width as u32,
         );
-        let min_y = u32::min(
+        let min_y = u32::max(
+            0,
             // 看板のように基準位置より右に描くものがあるので、 - CELL_SIZE で少し広めにとる
             i32::max(0, -g.dy - CELL_SIZE as i32) as u32 / CELL_SIZE,
-            self.height as u32,
         );
         let max_y = u32::min(
             min_y + (wasm4::SCREEN_SIZE / CELL_SIZE) + 2,

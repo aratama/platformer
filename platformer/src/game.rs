@@ -31,8 +31,8 @@ impl Game {
         // let player_x = CELL_SIZE as f32 * 13.0;
         // let player_y = CELL_SIZE as f32 * 2.0;
 
-        let player_x = 41.0;
-        let player_y = 132.0;
+        let player_x = 50.0;
+        let player_y = 20.0;
 
         let player = Body::new(
             "player",

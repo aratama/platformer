@@ -332,6 +332,8 @@ impl Body {
                     self.velocity.y = -JUMP_ACCELERATION;
                     self.velocity.x = 1.0 * input.horizontal_acceralation();
                     self.climbing = 0;
+                    self.direction =
+                        Direction::fromDelta(input.horizontal_acceralation(), self.direction);
                 }
             } else if 0.0 < self.velocity.y
                 && input.is_button_pressed(wasm4::BUTTON_RIGHT)
