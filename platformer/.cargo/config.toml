@@ -13,8 +13,11 @@ rustflags = [
     # Reserve 2044 bytes of stack space, offset from 6580.
     # Bump this value, 16-byte aligned, if the framebuffer gets corrupted.
     # "-C", "link-arg=-zstack-size=8624",
-    "-C", "link-arg=-zstack-size=11200",
-
     # Not working? https://github.com/rust-lang/rust/issues/46645#issuecomment-423912553
     # "-C", "link-arg=--global-base=6560",
+
+    # 16 * 700 = 11200
+    "-C", "link-arg=-zstack-size=11200",
+    # 11200 - 2044 = 9156
+    "-C", "link-arg=--global-base=9156",
 ]
