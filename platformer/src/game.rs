@@ -5,6 +5,7 @@ use crate::image::fruit::FRUIT_IMAGE;
 use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
 use crate::palette::set_draw_color;
+use crate::save::{load, save, GameData};
 use crate::vector2::Vector2;
 use crate::wasm4;
 use crate::world::{World, CELL_SIZE};
@@ -97,7 +98,14 @@ impl Game {
         }
 
         if inputs.is_button_just_pressed(wasm4::BUTTON_2) {
-            self.debug = !self.debug;
+            // self.debug = !self.debug;
+            let game_data: GameData = GameData {
+                x: self.player.position.x,
+                y: self.player.position.y,
+            };
+            save(&game_data);
+            let loaded: GameData = load();
+            wasm4::trace(format!("{} {}", loaded.x, loaded.y))
         }
 
         // renders

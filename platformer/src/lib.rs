@@ -26,6 +26,7 @@ mod image;
 mod input;
 mod palette;
 mod point;
+mod save;
 mod vector2;
 mod wasm4;
 mod world;
