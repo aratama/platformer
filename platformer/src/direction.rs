@@ -13,7 +13,7 @@ impl Direction {
         }
     }
 
-    pub fn fromDelta(delta: f32, def: Direction) -> Direction {
+    pub fn from_delta(delta: f32, def: Direction) -> Direction {
         if delta == 0.0 {
             def
         } else if 0.0 <= delta {

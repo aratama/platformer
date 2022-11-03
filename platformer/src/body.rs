@@ -1,7 +1,7 @@
 use crate::aabb::AABB;
 use crate::direction::Direction;
 use crate::graphics::Graphics;
-use crate::image::climb::{CLIMB_HEIGHT, CLIMB_IMAGE, CLIMB_WIDTH};
+use crate::image::climb::{CLIMB_HEIGHT, CLIMB_IMAGE};
 use crate::image::jump::JUMP_IMAGE;
 use crate::image::lie::LIE_IMAGE;
 use crate::image::lookup::LOOKUP_IMAGE;
@@ -11,7 +11,7 @@ use crate::image::Image;
 use crate::input::Inputs;
 use crate::vector2::Vector2;
 use crate::wasm4;
-use crate::world::{Block, World, CELL_SIZE};
+use crate::world::{World, CELL_SIZE};
 
 // 重力
 const GRAVITY_X: f32 = 0.0;
@@ -190,8 +190,8 @@ impl Body {
     }
 
     pub fn center(&self) -> Vector2 {
-        let x = (self.position.x + self.body_width * 0.5);
-        let y = (self.position.y + self.body_height * 0.5);
+        let x = self.position.x + self.body_width * 0.5;
+        let y = self.position.y + self.body_height * 0.5;
         Vector2::new(x, y)
     }
 
@@ -333,7 +333,7 @@ impl Body {
                     self.velocity.x = 1.0 * input.horizontal_acceralation();
                     self.climbing = 0;
                     self.direction =
-                        Direction::fromDelta(input.horizontal_acceralation(), self.direction);
+                        Direction::from_delta(input.horizontal_acceralation(), self.direction);
                 }
             } else if 0.0 < self.velocity.y
                 && input.is_button_pressed(wasm4::BUTTON_RIGHT)
@@ -418,7 +418,7 @@ impl Body {
                 && cells_ok
                 && (match self.climbing_point {
                     None => true,
-                    Some(p) => true,
+                    Some(_) => true,
                 })
             {
                 self.climbing = input.horizontal_acceralation() as i32;

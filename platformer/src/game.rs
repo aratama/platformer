@@ -118,19 +118,7 @@ impl Game {
             dx,
             dy,
         };
-        // set_draw_color(0x4321);
-        // for y in (0..10) {
-        //     for x in (0..10) {
-        //         wasm4::blit(
-        //             &BG,
-        //             ((BG_WIDTH as i32 * x) as f32 + dx as f32 * 0.5).floor() as i32,
-        //             BG_HEIGHT as i32 * y,
-        //             BG_WIDTH,
-        //             BG_HEIGHT,
-        //             BG_FLAGS,
-        //         );
-        //     }
-        // }
+
 
         set_draw_color(0x3210);
         self.world.draw(graphics);
