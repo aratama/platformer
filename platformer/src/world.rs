@@ -3,7 +3,7 @@ use crate::image::board_right::{BOARD_RIGHT_FLAGS, BOARD_RIGHT_IMAGE};
 use crate::image::board_up::{BOARD_UP_FLAGS, BOARD_UP_IMAGE};
 use crate::palette::set_draw_color;
 use crate::wasm4;
-use crate::world_map::{WORLD, WORLD_HEIGHT, WORLD_WIDTH};
+use crate::world_map::{WORLD,  WORLD_WIDTH};
 pub const CELL_SIZE: u32 = 8;
 
 pub struct World {
