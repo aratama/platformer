@@ -9,6 +9,7 @@ use crate::image::player::PLAYER_IMAGE;
 use crate::image::walk::WALK_ANIMATION;
 use crate::image::Image;
 use crate::input::Inputs;
+use crate::sound::{play, Sound};
 use crate::vector2::Vector2;
 use crate::wasm4;
 use crate::world::{Block, World, CELL_SIZE};
@@ -268,6 +269,17 @@ impl Body {
     fn jump(&mut self, world: &World) {
         if self.is_grounded(world) {
             self.velocity.y = -JUMP_ACCELERATION;
+            play(Sound {
+                freq1: 490,
+                freq2: 750,
+                attack: 0,
+                decay: 0,
+                sustain: 0,
+                release: 31,
+                volume: 18,
+                channel: 68,
+                mode: 1,
+            })
         }
     }
 

@@ -31,6 +31,7 @@ mod vector2;
 mod wasm4;
 mod world;
 mod world_map;
+mod sound;
 use game::Game;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
