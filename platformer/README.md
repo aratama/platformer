@@ -1,4 +1,11 @@
-# Platformer
+# towerclimber
+
+### Guides
+
+- Left and right button to move
+- Up buton to look up
+- Down button to crouch down or climb down a ladder
+- Button1 to jump
 
 ### Run locally
 

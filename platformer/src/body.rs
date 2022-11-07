@@ -485,6 +485,7 @@ impl Body {
         let x = (self.body_width * 0.5 - i.width as f32 * 0.5 + self.position.x.floor()) as i32;
         let y = (self.body_height - i.height as f32 + self.position.y.floor()) as i32;
 
+        g.set_draw_color(0x4320);
         if self.climbing != 0 {
             let x = (self.position.x).floor() as i32;
             let y = (self.body_height - CLIMB_HEIGHT as f32 + self.position.y.floor()) as i32;

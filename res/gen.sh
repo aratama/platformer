@@ -9,3 +9,4 @@ w4 png2src --rust walk3.png > out/walk3.rs
 w4 png2src --rust climb.png > out/climb.rs
 w4 png2src --rust board-right.png > out/board-right.rs
 w4 png2src --rust board-up.png > out/board_up.rs
+w4 png2src --rust tile.png > out/tile.rs
