@@ -11,9 +11,6 @@ crate-type = ["cdylib"]
 buddy-alloc = {version = "0.4.1", optional = true}
 fastrand = "1.6.0"
 lazy_static = "1.4.0"
-serde = { version = "1.0", features = ["derive"] }
-rmp-serde = "1.1"
-
 
 [profile.release]
 debug = false
