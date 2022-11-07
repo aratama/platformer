@@ -12,4 +12,5 @@ pub static LOOKUP_IMAGE: Image = Image {
     width: LOOKUP_WIDTH,
     height: LOOKUP_HEIGHT,
     frames: &[&LOOKUP],
+    flags: LOOKUP_FLAGS
 };

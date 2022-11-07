@@ -41,4 +41,5 @@ pub const WALK_ANIMATION: Image = Image {
     width: WALK1_WIDTH,
     height: WALK1_HEIGHT,
     frames: &[&WALK0, &WALK1, &WALK2, &WALK3],
+    flags: WALK0_FLAGS
 };

@@ -13,4 +13,5 @@ pub static TILE_IMAGE: Image = Image {
     width: TILE_WIDTH,
     height: TILE_HEIGHT,
     frames: &[&TILE],
+    flags: TILE_FLAGS
 };

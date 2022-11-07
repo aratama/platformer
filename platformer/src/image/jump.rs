@@ -12,4 +12,5 @@ pub static JUMP_IMAGE: Image = Image {
     width: JUMP_WIDTH,
     height: JUMP_HEIGHT,
     frames: &[&JUMP],
+    flags: JUMP_FLAGS
 };

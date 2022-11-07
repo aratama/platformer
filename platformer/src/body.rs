@@ -1,7 +1,7 @@
 use crate::aabb::AABB;
 use crate::direction::Direction;
 use crate::graphics::Graphics;
-use crate::image::climb::{CLIMB_HEIGHT, CLIMB_IMAGE};
+use crate::image::climb::CLIMB_IMAGE;
 use crate::image::jump::JUMP_IMAGE;
 use crate::image::lie::LIE_IMAGE;
 use crate::image::lookup::LOOKUP_IMAGE;
@@ -60,7 +60,7 @@ pub struct Body {
 
     pub velocity: Vector2,
 
-    pub image: Image,
+    pub image: &'static Image,
 
     pub direction: Direction,
 
@@ -95,7 +95,7 @@ impl Body {
     pub fn new(
         name: &'static str,
         position: Vector2,
-        image: Image,
+        image: &'static Image,
         body_width: f32,
         body_height: f32,
     ) -> Self {
@@ -472,14 +472,14 @@ impl Body {
 
         let grounded = self.is_grounded(world);
 
-        let i: Image = if !grounded {
-            JUMP_IMAGE
+        let i: &Image = if !grounded {
+            &JUMP_IMAGE
         } else if inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
-            LIE_IMAGE
+            &LIE_IMAGE
         } else if inputs.is_button_pressed(wasm4::BUTTON_UP) {
-            LOOKUP_IMAGE
+            &LOOKUP_IMAGE
         } else {
-            PLAYER_IMAGE
+            &PLAYER_IMAGE
         };
 
         let x = (self.body_width * 0.5 - i.width as f32 * 0.5 + self.position.x.floor()) as i32;
@@ -488,19 +488,19 @@ impl Body {
         g.set_draw_color(0x4320);
         if self.climbing != 0 {
             let x = (self.position.x).floor() as i32;
-            let y = (self.body_height - CLIMB_HEIGHT as f32 + self.position.y.floor()) as i32;
+            let y = (self.body_height - CLIMB_IMAGE.height as f32 + self.position.y.floor()) as i32;
             if self.direction == Direction::Right {
                 // TODO: refactor
-                g.draw(CLIMB_IMAGE, x - 2, y + 2, flags);
+                g.draw(&CLIMB_IMAGE, x - 2, y + 2, flags);
             } else {
-                g.draw(CLIMB_IMAGE, x - 8, y + 2, flags);
+                g.draw(&CLIMB_IMAGE, x - 8, y + 2, flags);
             }
         } else if grounded && inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
-            g.draw(LIE_IMAGE, x, y, flags);
+            g.draw(&LIE_IMAGE, x, y, flags);
         } else if grounded && 0.1 < f32::abs(self.velocity.x) {
-            g.animate(WALK_ANIMATION, x, y, flags, 5);
+            g.animate(&WALK_ANIMATION, x, y, flags, 5);
         } else {
-            g.draw(i, x, y, flags);
+            g.draw(&i, x, y, flags);
         }
 
         if g.debug {
