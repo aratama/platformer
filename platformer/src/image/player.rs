@@ -12,4 +12,5 @@ pub static PLAYER_IMAGE: Image = Image {
     width: PLAYER_WIDTH,
     height: PLAYER_HEIGHT,
     frames: &[&PLAYER],
+    flags: PLAYER_FLAGS
 };

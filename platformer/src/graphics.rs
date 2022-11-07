@@ -14,11 +14,11 @@ impl Graphics {
         wasm4::blit(sprite, x + self.dx, y + self.dy, width, height, flags);
     }
 
-    pub fn draw(&self, image: Image, x: i32, y: i32, flags: u32) {
+    pub fn draw(&self, image: &Image, x: i32, y: i32, flags: u32) {
         image.draw(x + self.dx, y + self.dy, flags);
     }
 
-    pub fn animate(&self, image: Image, x: i32, y: i32, flags: u32, speed: u32) {
+    pub fn animate(&self, image: &Image, x: i32, y: i32, flags: u32, speed: u32) {
         image.animate(x + self.dx, y + self.dy, flags, self.frame_count, speed);
     }
 

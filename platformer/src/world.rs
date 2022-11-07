@@ -1,12 +1,11 @@
 use crate::graphics::Graphics;
-use crate::image::board_right::{BOARD_RIGHT_FLAGS, BOARD_RIGHT_IMAGE};
-use crate::image::board_up::{BOARD_UP_FLAGS, BOARD_UP_IMAGE};
+use crate::image::board_right::BOARD_RIGHT_IMAGE;
+use crate::image::board_up::BOARD_UP_IMAGE;
+use crate::image::tile::{TILE_FLAGS, TILE_IMAGE};
 use crate::palette::set_draw_color;
 use crate::wasm4;
-use crate::world_map::{WORLD,  WORLD_WIDTH};
-use crate::image::tile::{TILE_IMAGE, TILE_FLAGS};
+use crate::world_map::{WORLD, WORLD_WIDTH};
 pub const CELL_SIZE: u32 = 8;
-
 
 pub struct World {
     width: u32,
@@ -88,34 +87,31 @@ impl World {
 
                     Block::Wall => {
                         set_draw_color(0x4321);
-                        // g.rect(
-                        //     (CELL_SIZE * x) as i32,
-                        //     (CELL_SIZE * y) as i32,
-                        //     CELL_SIZE,
-                        //     CELL_SIZE,
-                        // );
-                        g.draw(TILE_IMAGE, (CELL_SIZE * x) as i32,  (CELL_SIZE * y) as i32, TILE_FLAGS);
-
-
+                        g.draw(
+                            &TILE_IMAGE,
+                            (CELL_SIZE * x) as i32,
+                            (CELL_SIZE * y) as i32,
+                            TILE_FLAGS,
+                        );
                     }
 
                     Block::RightArrow => {
                         g.set_draw_color(0x4320);
                         g.draw(
-                            BOARD_RIGHT_IMAGE,
+                            &BOARD_RIGHT_IMAGE,
                             (CELL_SIZE * x) as i32,
                             (CELL_SIZE * y) as i32,
-                            BOARD_RIGHT_FLAGS,
+                            0,
                         );
                     }
 
                     Block::UpArrow => {
                         g.set_draw_color(0x4320);
                         g.draw(
-                            BOARD_UP_IMAGE,
+                            &BOARD_UP_IMAGE,
                             (CELL_SIZE * x) as i32,
                             (CELL_SIZE * y) as i32,
-                            BOARD_UP_FLAGS,
+                            0,
                         );
                     }
                 }

@@ -37,7 +37,7 @@ impl Game {
             "player",
             // Vector2::new(CELL_SIZE as f32 * 13.0, CELL_SIZE as f32 * 235.0),
             Vector2::new(player_x, player_y),
-            PLAYER_IMAGE,
+            &PLAYER_IMAGE,
             6.0,
             12.0,
         );
@@ -118,7 +118,6 @@ impl Game {
             dx,
             dy,
         };
-
 
         set_draw_color(0x3210);
         self.world.draw(graphics);

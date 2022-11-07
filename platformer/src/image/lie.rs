@@ -12,4 +12,5 @@ pub static LIE_IMAGE: Image = Image {
     width: LIE_WIDTH,
     height: LIE_HEIGHT,
     frames: &[&LIE],
+    flags: LIE_FLAGS
 };
