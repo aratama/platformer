@@ -16,9 +16,9 @@ rmp-serde = "1.1"
 
 
 [profile.release]
-debug = true
+debug = false
 lto = true
-opt-level = "z"
+opt-level = 's'
 panic = 'abort'
 
 [features]
