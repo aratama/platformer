@@ -109,7 +109,7 @@ impl Game {
             };
             save(&game_data);
             let loaded: GameData = load();
-            wasm4::trace(format!("{} {}", loaded.x, loaded.y))
+            // wasm4::trace(format!("{} {}", loaded.x, loaded.y))
         }
 
         // renders
@@ -135,11 +135,12 @@ impl Game {
         }
 
         set_draw_color(0x02);
-        wasm4::text(
-            format!("{0: >04}m", self.score.floor()),
-            1,
-            (dy as f32 + (WORLD_HEIGHT as f32 * CELL_SIZE as f32 - self.score)) as i32 + 2,
-        );
+        // snip-rust-fmt-code を指定しているので to_string や format! が動かない
+        // wasm4::text(
+        //     format!("{0: >04}m", self.score.floor()),
+        //     1,
+        //     (dy as f32 + (WORLD_HEIGHT as f32 * CELL_SIZE as f32 - self.score)) as i32 + 2,
+        // );
 
         set_draw_color(0x3210);
         self.world.draw(graphics);
