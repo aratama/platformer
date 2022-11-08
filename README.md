@@ -1,6 +1,6 @@
 # towerclimber
 
-![screenshot](./docs/screenshot.png)
+[![screenshot](./docs/screenshot.png)](https://aratama.github.io/towerclimber)
 
 A simple platformer game built on [wasm-4](https://wasm4.org/)
 
