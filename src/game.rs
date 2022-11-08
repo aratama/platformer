@@ -78,7 +78,7 @@ impl Game {
 
         let inputs = Inputs::new(gamepad, self.prev_gamepad);
 
-        self.player.input(inputs, &self.world);
+        self.player.input(&inputs, &self.world);
 
         self.prev_gamepad = unsafe { *wasm4::GAMEPAD1 };
 

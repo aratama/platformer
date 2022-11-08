@@ -7,6 +7,7 @@ use crate::image::jump::JUMP_IMAGE;
 use crate::image::lie::LIE_IMAGE;
 use crate::image::lookup::LOOKUP_IMAGE;
 use crate::image::player::PLAYER_IMAGE;
+use crate::image::slip::SLIP_IMAGE;
 use crate::image::Image;
 use crate::input::Inputs;
 use crate::sound::{play, Sound};
@@ -168,24 +169,30 @@ impl Body {
         aabb.collections(&walls)
     }
 
+    /**
+     * 右側の壁に触れているかどうか
+     */
     pub fn is_touching_right(&self, margin: f32, world: &World) -> bool {
         let walls = self.get_walls(world);
         let aabb = AABB {
             x: self.position.x,
             y: self.position.y,
             w: self.body_width + margin,
-            h: self.body_height,
+            h: self.body_height * 0.5,
         };
         aabb.collections(&walls)
     }
 
+    /**
+     * 左側の壁に触れているかどうか
+     */
     pub fn is_touching_left(&self, margin: f32, world: &World) -> bool {
         let walls = self.get_walls(world);
         let aabb = AABB {
             x: self.position.x - margin,
             y: self.position.y,
             w: self.body_width + margin,
-            h: self.body_height,
+            h: self.body_height * 0.5,
         };
         aabb.collections(&walls)
     }
@@ -269,17 +276,6 @@ impl Body {
     fn jump(&mut self, world: &World) {
         if self.is_grounded(world) {
             self.velocity.y = -JUMP_ACCELERATION;
-            play(Sound {
-                freq1: 490,
-                freq2: 750,
-                attack: 0,
-                decay: 0,
-                sustain: 0,
-                release: 31,
-                volume: 18,
-                channel: 68,
-                mode: 1,
-            })
         }
     }
 
@@ -296,9 +292,27 @@ impl Body {
     }
 
     /**
+     * 右向きのずり落ちをしているかどうか
+     */
+    pub fn is_right_slide(&self, input: &Inputs, world: &World) -> bool {
+        0.0 < self.velocity.y
+            && input.is_button_pressed(wasm4::BUTTON_RIGHT)
+            && self.is_touching_right(CLING_MERGIN, world)
+    }
+
+    /**
+     * 左向きのずり落ちをしているかどうか
+     */
+    pub fn is_left_slide(&self, input: &Inputs, world: &World) -> bool {
+        0.0 < self.velocity.y
+            && input.is_button_pressed(wasm4::BUTTON_LEFT)
+            && self.is_touching_left(CLING_MERGIN, world)
+    }
+
+    /**
      * 入力にしたがってプレイヤーキャラクターとしての更新を行います
      */
-    pub fn input(&mut self, input: Inputs, world: &World) {
+    pub fn input(&mut self, input: &Inputs, world: &World) {
         if self.wait == 0 {
             let grounded = self.is_grounded(&world);
 
@@ -346,26 +360,23 @@ impl Body {
                     self.climbing = 0;
                     self.direction =
                         Direction::from_delta(input.horizontal_acceralation(), self.direction);
+                    play_jump_se()
                 }
-            } else if 0.0 < self.velocity.y
-                && input.is_button_pressed(wasm4::BUTTON_RIGHT)
-                && self.is_touching_right(CLING_MERGIN, world)
-            {
+            } else if self.is_right_slide(input, world) {
                 // 右ずり落ち
                 if input.is_button_just_pressed(wasm4::BUTTON_1) {
                     self.velocity.y = -JUMP_ACCELERATION;
                     self.velocity.x = -1.0;
                     self.direction = Direction::Left;
+                    play_jump_se()
                 }
-            } else if 0.0 < self.velocity.y
-                && input.is_button_pressed(wasm4::BUTTON_LEFT)
-                && self.is_touching_left(CLING_MERGIN, world)
-            {
+            } else if self.is_left_slide(input, world) {
                 // 左ずり落ち
                 if input.is_button_just_pressed(wasm4::BUTTON_1) {
                     self.velocity.y = -JUMP_ACCELERATION;
                     self.velocity.x = 1.0;
                     self.direction = Direction::Right;
+                    play_jump_se()
                 }
             } else {
                 // 左右移動
@@ -386,30 +397,14 @@ impl Body {
 
                 // ジャンプ
                 if input.is_button_just_pressed(wasm4::BUTTON_1) {
-                    self.jump(world)
+                    self.jump(world);
+                    play_jump_se();
                 }
 
                 // 空中で上昇中にジャンプボタンを離した場合は急速に加速度を失うことでジャンプ高さを調節できる
                 if !grounded && !input.is_button_pressed(wasm4::BUTTON_1) && self.velocity.y < 0.0 {
                     self.velocity.y *= 0.1;
                 }
-
-                // 掴みからのジャンプ
-                // if self.climbing_point != None && input.is_button_just_pressed(wasm4::BUTTON_1) {
-                //     self.climbing_point = None;
-                //     self.velocity.x = 0.0;
-                //     self.velocity.y = 0.0;
-                // }
-
-                // 現在の掴まり位置から十分離れると、その位置に再度掴まれるようになる
-                // match self.climbing_point {
-                //     None => {}
-                //     Some(p) => {
-                //         if CELL_SIZE as f32 * 2.0 < p.distance(self.center()) {
-                //             self.climbing_point = None;
-                //         }
-                //     }
-                // }
             }
 
             // よじ登り判定
@@ -495,6 +490,10 @@ impl Body {
             } else {
                 g.draw(&CLIMB_IMAGE, x - 8, y + 2, flags);
             }
+        } else if self.is_right_slide(inputs, world) {
+            g.draw(&SLIP_IMAGE, x, y, flags);
+        } else if self.is_left_slide(inputs, world) {
+            g.draw(&SLIP_IMAGE, x, y, flags);
         } else if grounded && inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
             g.draw(&LIE_IMAGE, x, y, flags);
         } else if grounded && 0.1 < f32::abs(self.velocity.x) {
@@ -517,4 +516,18 @@ impl Body {
             }
         }
     }
+}
+
+fn play_jump_se() {
+    play(Sound {
+        freq1: 490,
+        freq2: 750,
+        attack: 0,
+        decay: 0,
+        sustain: 0,
+        release: 31,
+        volume: 18,
+        channel: 68,
+        mode: 1,
+    })
 }

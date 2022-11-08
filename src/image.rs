@@ -5,6 +5,7 @@ pub mod jump;
 pub mod lie;
 pub mod lookup;
 pub mod player;
+pub mod slip;
 pub mod tile;
 pub mod walk0;
 pub mod walk1;
