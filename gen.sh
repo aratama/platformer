@@ -10,6 +10,6 @@ for filename in ./image/*.png; do
     echo "    width: ${up}_WIDTH," >> $out
     echo "    height: ${up}_HEIGHT," >> $out
     echo "    flags: ${up}_FLAGS," >> $out
-    echo "    frames: &[&${up}]," >> $out
+    echo "    data: &${up}," >> $out
     echo "};" >> $out
 done

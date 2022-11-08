@@ -10,5 +10,5 @@ pub const JUMP_IMAGE: Image = Image {
     width: JUMP_WIDTH,
     height: JUMP_HEIGHT,
     flags: JUMP_FLAGS,
-    frames: &[&JUMP],
+    data: &JUMP,
 };

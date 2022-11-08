@@ -10,5 +10,5 @@ pub const WALK0_IMAGE: Image = Image {
     width: WALK0_WIDTH,
     height: WALK0_HEIGHT,
     flags: WALK0_FLAGS,
-    frames: &[&WALK0],
+    data: &WALK0,
 };

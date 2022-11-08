@@ -10,5 +10,5 @@ pub const LOOKUP_IMAGE: Image = Image {
     width: LOOKUP_WIDTH,
     height: LOOKUP_HEIGHT,
     flags: LOOKUP_FLAGS,
-    frames: &[&LOOKUP],
+    data: &LOOKUP,
 };

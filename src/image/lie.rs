@@ -10,5 +10,5 @@ pub const LIE_IMAGE: Image = Image {
     width: LIE_WIDTH,
     height: LIE_HEIGHT,
     flags: LIE_FLAGS,
-    frames: &[&LIE],
+    data: &LIE,
 };

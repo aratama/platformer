@@ -10,5 +10,5 @@ pub const CLIMB_IMAGE: Image = Image {
     width: CLIMB_WIDTH,
     height: CLIMB_HEIGHT,
     flags: CLIMB_FLAGS,
-    frames: &[&CLIMB],
+    data: &CLIMB,
 };

@@ -10,5 +10,5 @@ pub const TILE_IMAGE: Image = Image {
     width: TILE_WIDTH,
     height: TILE_HEIGHT,
     flags: TILE_FLAGS,
-    frames: &[&TILE],
+    data: &TILE,
 };

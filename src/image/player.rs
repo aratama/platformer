@@ -10,5 +10,5 @@ pub const PLAYER_IMAGE: Image = Image {
     width: PLAYER_WIDTH,
     height: PLAYER_HEIGHT,
     flags: PLAYER_FLAGS,
-    frames: &[&PLAYER],
+    data: &PLAYER,
 };

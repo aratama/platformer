@@ -10,5 +10,5 @@ pub const BOARD_UP_IMAGE: Image = Image {
     width: BOARD_UP_WIDTH,
     height: BOARD_UP_HEIGHT,
     flags: BOARD_UP_FLAGS,
-    frames: &[&BOARD_UP],
+    data: &BOARD_UP,
 };
