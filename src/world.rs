@@ -3,6 +3,7 @@ use crate::image::board_right::BOARD_RIGHT_IMAGE;
 use crate::image::board_up::BOARD_UP_IMAGE;
 use crate::image::tile::TILE_IMAGE;
 use crate::palette::set_draw_color;
+use crate::vector2::Vector2;
 use crate::wasm4;
 use crate::world_map::{WORLD, WORLD_WIDTH};
 pub const CELL_SIZE: u32 = 8;
@@ -10,6 +11,7 @@ pub const CELL_SIZE: u32 = 8;
 pub struct World {
     width: u32,
     height: u32,
+    pub start: Vector2,
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
@@ -22,9 +24,17 @@ pub enum Block {
 
 impl World {
     pub fn new() -> World {
+        let mut start = Vector2::default();
+        for (i, c) in WORLD.chars().enumerate() {
+            if c == '@' {
+                start.x = (i as u32 % WORLD_WIDTH * CELL_SIZE) as f32;
+                start.y = (i as u32 / WORLD_WIDTH * CELL_SIZE) as f32;
+            }
+        }
         World {
             width: WORLD_WIDTH,
             height: WORLD.len() as u32 / WORLD_WIDTH,
+            start,
         }
     }
 
