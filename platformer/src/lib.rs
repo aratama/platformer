@@ -18,6 +18,7 @@
 mod aabb;
 // #[cfg(feature = "buddy-alloc")]
 mod alloc;
+mod animation;
 mod body;
 mod direction;
 mod game;
@@ -27,11 +28,11 @@ mod input;
 mod palette;
 mod point;
 mod save;
+mod sound;
 mod vector2;
 mod wasm4;
 mod world;
 mod world_map;
-mod sound;
 use game::Game;
 use lazy_static::lazy_static;
 use std::sync::Mutex;

@@ -6,7 +6,10 @@ pub mod lie;
 pub mod lookup;
 pub mod player;
 pub mod tile;
-pub mod walk;
+pub mod walk0;
+pub mod walk1;
+pub mod walk2;
+pub mod walk3;
 
 use crate::wasm4;
 

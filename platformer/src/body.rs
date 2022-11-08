@@ -1,4 +1,5 @@
 use crate::aabb::AABB;
+use crate::animation::walk::WALK_ANIMATION;
 use crate::direction::Direction;
 use crate::graphics::Graphics;
 use crate::image::climb::CLIMB_IMAGE;
@@ -6,7 +7,6 @@ use crate::image::jump::JUMP_IMAGE;
 use crate::image::lie::LIE_IMAGE;
 use crate::image::lookup::LOOKUP_IMAGE;
 use crate::image::player::PLAYER_IMAGE;
-use crate::image::walk::WALK_ANIMATION;
 use crate::image::Image;
 use crate::input::Inputs;
 use crate::sound::{play, Sound};

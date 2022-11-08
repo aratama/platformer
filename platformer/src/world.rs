@@ -1,7 +1,7 @@
 use crate::graphics::Graphics;
 use crate::image::board_right::BOARD_RIGHT_IMAGE;
 use crate::image::board_up::BOARD_UP_IMAGE;
-use crate::image::tile::{TILE_FLAGS, TILE_IMAGE};
+use crate::image::tile::TILE_IMAGE;
 use crate::palette::set_draw_color;
 use crate::wasm4;
 use crate::world_map::{WORLD, WORLD_WIDTH};
@@ -91,7 +91,7 @@ impl World {
                             &TILE_IMAGE,
                             (CELL_SIZE * x) as i32,
                             (CELL_SIZE * y) as i32,
-                            TILE_FLAGS,
+                            TILE_IMAGE.flags,
                         );
                     }
 
@@ -101,7 +101,7 @@ impl World {
                             &BOARD_RIGHT_IMAGE,
                             (CELL_SIZE * x) as i32,
                             (CELL_SIZE * y) as i32,
-                            0,
+                            BOARD_RIGHT_IMAGE.flags,
                         );
                     }
 
