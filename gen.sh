@@ -1,9 +1,9 @@
 #!/bin/bash
-for filename in ./*.png; do
+for filename in ./image/*.png; do
     base=$(basename "$filename")
     name=${base%.*}
-    out="../platformer/src/image/${name}.rs"
-    w4 png2src --rust "$filename" > $out
+    out="./src/image/${name}.rs"
+    w4 png2src --rust "$filename" > "$out"
     up=${name^^}
     echo "use crate::image::Image;" >> $out
     echo "pub const ${up}_IMAGE: Image = Image {" >> $out

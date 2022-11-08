@@ -8,4 +8,4 @@ npx wasm-opt -Oz --zero-filled-memory --strip-producers --dce target/wasm32-unkn
 
 ls -l target/wasm32-unknown-unknown/release/cart.wasm
 ls -l target/wasm32-unknown-unknown/release/cart.min.wasm
-w4 bundle target/wasm32-unknown-unknown/release/cart.min.wasm --title "mygame" --html ../docs/mygame.html
+w4 bundle target/wasm32-unknown-unknown/release/cart.min.wasm --title "mygame" --html ./docs/mygame.html

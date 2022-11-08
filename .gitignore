@@ -9,3 +9,6 @@
 *.log
 
 res/out
+
+target
+target/*
