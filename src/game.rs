@@ -6,7 +6,8 @@ use crate::palette::set_draw_color;
 use crate::save::{load, save, GameData, GAME_DATA_VERSION};
 use crate::vector2::Vector2;
 use crate::wasm4;
-use crate::world::World;
+use crate::world::{World, CELL_SIZE};
+use crate::world_map::WORLD_HEIGHT;
 use fastrand::Rng;
 
 const MIN_PLAYER_LOOKUP: i32 = -60;
@@ -21,6 +22,7 @@ pub struct Game {
     fruits: std::vec::Vec<Body>,
     world: World,
     debug: bool,
+    score: f32,
 }
 
 impl Game {
@@ -63,6 +65,7 @@ impl Game {
             rng,
             world,
             debug: false,
+            score: 0.0,
         }
     }
 
@@ -92,6 +95,11 @@ impl Game {
             fruit.physical_update(0, &self.world);
         }
 
+        self.score = f32::max(
+            self.score,
+            (WORLD_HEIGHT as f32 * CELL_SIZE as f32 - (self.player.position.y)) as f32,
+        );
+
         if inputs.is_button_just_pressed(wasm4::BUTTON_2) {
             // self.debug = !self.debug;
             let game_data: GameData = GameData {
@@ -105,6 +113,7 @@ impl Game {
         }
 
         // renders
+
         let player_center = self.player.center();
         let dx = wasm4::SCREEN_SIZE as i32 / 2 - player_center.x.floor() as i32;
         let dy = wasm4::SCREEN_SIZE as i32 / 2 - player_center.y.floor() as i32
@@ -115,6 +124,22 @@ impl Game {
             dx,
             dy,
         };
+
+        set_draw_color(0x22);
+        for x in 0..(wasm4::SCREEN_SIZE / 4) {
+            wasm4::hline(
+                x as i32 * 4,
+                (dy as f32 + (WORLD_HEIGHT as f32 * CELL_SIZE as f32 - self.score)) as i32,
+                2,
+            );
+        }
+
+        set_draw_color(0x02);
+        wasm4::text(
+            format!("{0: >04}m", self.score.floor()),
+            1,
+            (dy as f32 + (WORLD_HEIGHT as f32 * CELL_SIZE as f32 - self.score)) as i32 + 2,
+        );
 
         set_draw_color(0x3210);
         self.world.draw(graphics);
