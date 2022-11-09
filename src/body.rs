@@ -441,11 +441,11 @@ impl Body {
             let next_cell_cy = current_cell_cy;
 
             let current_cell = world.is_empty(current_cell_cx, current_cell_cy); // プレイヤーがいるブロック
-            let next_cell = world.is_empty(next_cell_cx, current_cell_cy); // よじ登る対象のブロック。これが空の場合はよじ登れない
+            let next_cell = world.is_climbable(next_cell_cx, current_cell_cy); // よじ登る対象のブロック。これが空の場合はよじ登れない
             let up_next_cell = world.is_empty(next_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの上のブロック。これが空ならよじ登れない
             let up_cell = world.is_empty(current_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの手前上のブロック。これが空ならよじ登れる
             let down_cell = world.is_empty(current_cell_cx, current_cell_cy + 1); // 現在位置の下のブロック。これが空ならよじ登れる。この判定をしないと、落ちるおそれのない階段状の地形でも毎回掴みが発生してしまう
-            let cells_ok = current_cell && !next_cell && up_next_cell && up_cell && down_cell; //判定対象の4つのブロックの状態が有効かどうか
+            let cells_ok = current_cell && next_cell && up_next_cell && up_cell && down_cell; //判定対象の4つのブロックの状態が有効かどうか
 
             if !grounded
                 && 0.0 < self.velocity.y // 落下中のみ。この判定をしないと、小さな山を、壁をこすりながらジャンプしたときに掴みが発動してしまう  
@@ -475,14 +475,10 @@ impl Body {
         // Stingとの衝突判定
         for sting in self.get_stings(world) {
             if sting.intersect(self.get_aabb()) {
-                play_jump_se();
+                play_smash_se();
                 const STING_POWER: f32 = 1.0;
                 let vec = (self.position - sting.get_center());
-                if f32::abs(vec.x) < f32::abs(vec.y) {
-                    self.velocity.y = if 0.0 < vec.y { 1.0 } else { -1.0 } * 2.0;
-                } else {
-                    self.velocity.x = if 0.0 < vec.x { 1.0 } else { -1.0 } * 1.0;
-                }
+                self.velocity.x = if 0.0 < vec.x { 1.0 } else { -1.0 } * 2.5;
             }
         }
 
@@ -571,5 +567,19 @@ fn play_jump_se() {
         volume: 18,
         channel: 68,
         mode: 1,
+    })
+}
+
+fn play_smash_se() {
+    play(Sound {
+        freq1: 140,
+        freq2: 70,
+        attack: 0,
+        decay: 0,
+        sustain: 0,
+        release: 8,
+        volume: 50,
+        channel: 3,
+        mode: 0,
     })
 }

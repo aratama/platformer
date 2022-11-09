@@ -81,6 +81,20 @@ impl World {
         }
     }
 
+    pub fn is_climbable(&self, x: i32, y: i32) -> bool {
+        if 0 <= x && x < self.width as i32 && 0 <= y && y < self.height as i32 {
+            let i = (WORLD_WIDTH as i32 * y + x) as usize;
+            let s = WORLD[i..(i + 1)].to_string();
+            if s == "#" {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
     pub fn draw(&self, g: Graphics) {
         let min_x = u32::max(
             0,
