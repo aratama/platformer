@@ -14,6 +14,18 @@ impl Vector2 {
     pub fn distance(&self, v: Vector2) -> f32 {
         f32::sqrt(self.x * v.x + self.y * v.y)
     }
+
+    pub fn length(&self) -> f32 {
+        f32::sqrt(self.x * self.x + self.y * self.y)
+    }
+
+    pub fn normalize(&self) -> Vector2 {
+        *self * (1.0 / self.length())
+    }
+
+    pub fn set_size(&self, size: f32) -> Vector2 {
+        self.normalize() * size
+    }
 }
 
 impl ops::Add<Vector2> for Vector2 {

@@ -4,10 +4,11 @@ use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
 use crate::palette::set_draw_color;
 use crate::save::{load, save, GameData, GAME_DATA_VERSION};
+use crate::sound::{play, Sound};
 use crate::vector2::Vector2;
-use crate::wasm4;
 use crate::world::{World, CELL_SIZE};
 use crate::world_map::WORLD_HEIGHT;
+use crate::{sound, wasm4};
 use fastrand::Rng;
 use std::str;
 
@@ -86,7 +87,11 @@ impl Game {
         self.player
             .physical_update(inputs.horizontal_acceralation() as i32, &self.world);
 
-        if self.player.is_grounded(&self.world) && inputs.is_button_pressed(wasm4::BUTTON_UP) {
+        if self.player.is_grounded(&self.world)
+            && f32::abs(self.player.velocity.x) < 1.0
+            && f32::abs(self.player.velocity.y) < 1.0
+            && inputs.is_button_pressed(wasm4::BUTTON_UP)
+        {
             self.player_lookup = i32::min(MAX_PLAYER_LOOKUP, self.player_lookup + 2);
         } else {
             self.player_lookup = i32::max(MIN_PLAYER_LOOKUP, self.player_lookup - 4);
@@ -110,7 +115,8 @@ impl Game {
             };
             save(&game_data);
             let loaded: GameData = load();
-            // wasm4::trace(format!("{} {}", loaded.x, loaded.y))
+            wasm4::trace(int_to_string(loaded.x as u32));
+            wasm4::trace(int_to_string(loaded.y as u32));
         }
 
         // renders
@@ -128,7 +134,7 @@ impl Game {
 
         set_draw_color(0x02);
         for i in 0..10 {
-            let h = ((i * 10) as f32 * CELL_SIZE as f32);
+            let h = (i * 10) as f32 * CELL_SIZE as f32;
             if self.score < h as f32 {
                 let y = (dy as f32 + ((WORLD_HEIGHT - i * 10) as f32 * CELL_SIZE as f32)) as i32;
                 for x in 0..(wasm4::SCREEN_SIZE / 8) {
@@ -147,6 +153,10 @@ impl Game {
             fruit.draw(graphics, &self.world, &inputs);
         }
 
+        // score
+        set_draw_color(0x41);
+        wasm4::text(int_to_string(self.score as u32 / CELL_SIZE), 0, 0);
+
         if self.debug {
             set_draw_color(0x41);
             wasm4::text(
@@ -159,26 +169,58 @@ impl Game {
                 0,
             );
         }
+
+        // bgm
+
+        let channel1 = "d.....d.....d...";
+        let channel2 = "*.*.*.*.*.*.*.*.";
+
+        let tempo = 8;
+        let i = (self.frame_count / tempo) % 16;
+        if self.frame_count % tempo == 0 {
+            if channel1.as_bytes()[i as usize] == b'd' {
+                // wasm4::trace("d");
+                // play(Sound {
+                //     freq1: 300,
+                //     freq2: 0,
+                //     attack: 0,
+                //     decay: 6,
+                //     sustain: 0,
+                //     release: 6,
+                //     volume: 1,
+                //     channel: 3,
+                //     mode: 0,
+                // })
+                // wasm4::tone(500, 3, 5, 3);
+            }
+            if channel2.as_bytes()[i as usize] == b'*' {
+                // wasm4::trace("*");
+                // play(Sound {
+                //     freq1: 50,
+                //     freq2: 0,
+                //     attack: 0,
+                //     decay: 6,
+                //     sustain: 0,
+                //     release: 6,
+                //     volume: 100,
+                //     channel: 2,
+                //     mode: 0,
+                // })
+            }
+        }
     }
 }
 
-fn int_to_char(digit: u32) -> u8 {
-    b'0' + (digit as u8)
-}
-
 fn int_to_string(v: u32) -> String {
+    fn int_to_char(digit: u32) -> u8 {
+        b'0' + (digit as u8)
+    }
+
     let buf: &[u8; 4] = &[
         int_to_char(v / 1000),
         int_to_char(v % 1000 / 100),
         int_to_char(v % 100 / 10),
         int_to_char(v % 10),
     ];
-    let s = match str::from_utf8(buf) {
-        Ok(v) => v,
-        Err(_e) => {
-            wasm4::trace("unexpected value in int_to_string");
-            panic!();
-        }
-    };
-    s.to_string()
+    str::from_utf8(buf).unwrap().to_string()
 }

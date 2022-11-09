@@ -13,7 +13,7 @@ use crate::input::Inputs;
 use crate::sound::{play, Sound};
 use crate::vector2::Vector2;
 use crate::wasm4;
-use crate::world::{World, CELL_SIZE};
+use crate::world::{Block, World, CELL_SIZE};
 
 // 重力
 const GRAVITY_X: f32 = 0.0;
@@ -225,6 +225,39 @@ impl Body {
     }
 
     /**
+     * プレイヤーキャラクター周辺の、接触する可能性のある針を取得します
+     */
+    fn get_stings(&self, world: &World) -> Vec<AABB> {
+        let px = (self.position.x / CELL_SIZE as f32).floor() as i32;
+        let py = (self.position.y / CELL_SIZE as f32).floor() as i32;
+        let mut walls: Vec<AABB> = vec![];
+        // MARGIN = 1 の範囲だと、境界の部分に来たときに衝突判定が遅れて、壁と重なってしまう
+        const MARGIN: i32 = 2;
+        for cx in (px - MARGIN)..(px + 1 + MARGIN) {
+            for cy in (py - MARGIN)..(py + 1 + MARGIN) {
+                if world.get_cell(cx, cy) == Block::Sting {
+                    walls.push(AABB {
+                        x: CELL_SIZE as f32 * cx as f32,
+                        y: CELL_SIZE as f32 * cy as f32,
+                        w: CELL_SIZE as f32,
+                        h: CELL_SIZE as f32,
+                    })
+                }
+            }
+        }
+        walls
+    }
+
+    fn get_aabb(&self) -> AABB {
+        AABB {
+            x: self.position.x,
+            y: self.position.y,
+            w: self.body_width,
+            h: self.body_height,
+        }
+    }
+
+    /**
      * AABBを移動させます
      * 移動先に壁などがある場合はそこで止まります
      */
@@ -232,12 +265,7 @@ impl Body {
         // 壁となるAABBを集める
         let walls = self.get_walls(world);
 
-        let mut aabb = AABB {
-            x: self.position.x,
-            y: self.position.y,
-            w: self.body_width,
-            h: self.body_height,
-        };
+        let mut aabb = self.get_aabb();
 
         // 垂直方向に衝突判定
         if vy != 0.0 {
@@ -276,6 +304,7 @@ impl Body {
     fn jump(&mut self, world: &World) {
         if self.is_grounded(world) {
             self.velocity.y = -JUMP_ACCELERATION;
+            play_jump_se();
         }
     }
 
@@ -398,7 +427,6 @@ impl Body {
                 // ジャンプ
                 if input.is_button_just_pressed(wasm4::BUTTON_1) {
                     self.jump(world);
-                    play_jump_se();
                 }
 
                 // 空中で上昇中にジャンプボタンを離した場合は急速に加速度を失うことでジャンプ高さを調節できる
@@ -441,6 +469,20 @@ impl Body {
 
                 self.velocity.x = 0.0;
                 self.velocity.y = 0.0;
+            }
+        }
+
+        // Stingとの衝突判定
+        for sting in self.get_stings(world) {
+            if sting.intersect(self.get_aabb()) {
+                play_jump_se();
+                const STING_POWER: f32 = 1.0;
+                let vec = (self.position - sting.get_center());
+                if f32::abs(vec.x) < f32::abs(vec.y) {
+                    self.velocity.y = if 0.0 < vec.y { 1.0 } else { -1.0 } * 2.0;
+                } else {
+                    self.velocity.x = if 0.0 < vec.x { 1.0 } else { -1.0 } * 1.0;
+                }
             }
         }
 

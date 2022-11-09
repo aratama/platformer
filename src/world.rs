@@ -1,6 +1,8 @@
 use crate::graphics::Graphics;
 use crate::image::board_right::BOARD_RIGHT_IMAGE;
 use crate::image::board_up::BOARD_UP_IMAGE;
+use crate::image::ladder::LADDER_IMAGE;
+use crate::image::sting::STING_IMAGE;
 use crate::image::tile::TILE_IMAGE;
 use crate::palette::set_draw_color;
 use crate::vector2::Vector2;
@@ -19,7 +21,10 @@ pub enum Block {
     Empty,
     Wall,
     RightArrow,
+    LeftArrow,
     UpArrow,
+    Ladder,
+    Sting,
 }
 
 impl World {
@@ -46,8 +51,14 @@ impl World {
                 return Block::Wall;
             } else if s == "R" {
                 return Block::RightArrow;
+            } else if s == "L" {
+                return Block::LeftArrow;
             } else if s == "U" {
                 return Block::UpArrow;
+            } else if s == "=" {
+                return Block::Ladder;
+            } else if s == "^" {
+                return Block::Sting;
             } else {
                 return Block::Empty;
             }
@@ -60,7 +71,7 @@ impl World {
         if 0 <= x && x < self.width as i32 && 0 <= y && y < self.height as i32 {
             let i = (WORLD_WIDTH as i32 * y + x) as usize;
             let s = WORLD[i..(i + 1)].to_string();
-            if s == "#" {
+            if s == "#" || s == "^" {
                 return false;
             } else {
                 return true;
@@ -115,10 +126,40 @@ impl World {
                         );
                     }
 
+                    Block::LeftArrow => {
+                        g.set_draw_color(0x4320);
+                        g.draw(
+                            &BOARD_RIGHT_IMAGE,
+                            (CELL_SIZE * x) as i32,
+                            (CELL_SIZE * y) as i32,
+                            BOARD_RIGHT_IMAGE.flags | wasm4::BLIT_FLIP_X,
+                        );
+                    }
+
                     Block::UpArrow => {
                         g.set_draw_color(0x4320);
                         g.draw(
                             &BOARD_UP_IMAGE,
+                            (CELL_SIZE * x) as i32,
+                            (CELL_SIZE * y) as i32,
+                            0,
+                        );
+                    }
+
+                    Block::Ladder => {
+                        g.set_draw_color(0x4320);
+                        g.draw(
+                            &LADDER_IMAGE,
+                            (CELL_SIZE * x) as i32,
+                            (CELL_SIZE * y) as i32,
+                            0,
+                        );
+                    }
+
+                    Block::Sting => {
+                        g.set_draw_color(0x4442);
+                        g.draw(
+                            &STING_IMAGE,
                             (CELL_SIZE * x) as i32,
                             (CELL_SIZE * y) as i32,
                             0,
