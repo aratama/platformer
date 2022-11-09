@@ -477,8 +477,11 @@ impl Body {
             if sting.intersect(self.get_aabb()) {
                 play_smash_se();
                 const STING_POWER: f32 = 1.0;
-                let vec = (self.position - sting.get_center());
+                let vec = self.position - sting.get_center();
                 self.velocity.x = if 0.0 < vec.x { 1.0 } else { -1.0 } * 2.5;
+                if self.is_grounded(world) {
+                    self.velocity.y = -3.0;
+                }
             }
         }
 

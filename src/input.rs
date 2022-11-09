@@ -24,6 +24,15 @@ impl Inputs {
         (just) & button != 0
     }
 
+    pub fn is_any_button_just_pressed(&self) -> bool {
+        self.is_button_just_pressed(wasm4::BUTTON_1)
+            || self.is_button_just_pressed(wasm4::BUTTON_2)
+            || self.is_button_just_pressed(wasm4::BUTTON_UP)
+            || self.is_button_just_pressed(wasm4::BUTTON_DOWN)
+            || self.is_button_just_pressed(wasm4::BUTTON_LEFT)
+            || self.is_button_just_pressed(wasm4::BUTTON_RIGHT)
+    }
+
     pub fn horizontal_acceralation(&self) -> f32 {
         let l = if self.is_button_pressed(wasm4::BUTTON_LEFT) {
             1.0
