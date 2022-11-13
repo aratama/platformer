@@ -1,0 +1,17 @@
+{{#sprites}}
+// {{name}}
+use crate::wasm4::*;
+use crate::image::Image;
+
+const {{rustName}}_WIDTH: u32 = {{width}};
+const {{rustName}}_HEIGHT: u32 = {{height}};
+const {{rustName}}_FLAGS: u32 = {{flagsHumanReadable}};
+const {{rustName}}: [u8; {{length}}] = [ {{bytes}} ];
+
+pub const {{rustName}}_IMAGE: Image = Image {
+    width: {{rustName}}_WIDTH,
+    height: {{rustName}}_HEIGHT,
+    flags: {{rustName}}_FLAGS,
+    data: &{{rustName}},
+};
+{{/sprites}}
