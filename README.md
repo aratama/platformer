@@ -34,6 +34,7 @@ And:
 
 ```bash
 $ ./build
+$ w4 run target/wasm32-unknown-unknown/release/towerclimber.wasm
 ```
 
 ### Notes
