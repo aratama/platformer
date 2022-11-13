@@ -9,6 +9,7 @@ pub mod player;
 pub mod slip;
 pub mod sting;
 pub mod tile;
+pub mod title;
 pub mod walk0;
 pub mod walk1;
 pub mod walk2;
