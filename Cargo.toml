@@ -13,6 +13,12 @@ bytes = "1.2"
 fastrand = "1.6.0"
 lazy_static = "1.4.0"
 
+[profile.dev]
+# なぜか opt-level = 0 や 's' など特定の値で rust-lld でエラーになる
+# よくわからないが https://github.com/rust-lang/rust/issues/46645#issuecomment-423912553
+# で言われている問題？
+opt-level = 'z'
+
 [profile.release]
 debug = false
 lto = true
