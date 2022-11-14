@@ -15,6 +15,7 @@ pub struct World {
     width: u32,
     height: u32,
     pub start: Vector2,
+    pub carrot: Vector2,
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
@@ -32,16 +33,21 @@ pub enum Block {
 impl World {
     pub fn new() -> World {
         let mut start = Vector2::default();
+        let mut carrot = Vector2::default();
         for (i, c) in WORLD.chars().enumerate() {
             if c == '@' {
                 start.x = (i as u32 % WORLD_WIDTH * CELL_SIZE) as f32;
                 start.y = (i as u32 / WORLD_WIDTH * CELL_SIZE) as f32;
+            } else if c == '$' {
+                carrot.x = (i as u32 % WORLD_WIDTH * CELL_SIZE) as f32;
+                carrot.y = (i as u32 / WORLD_WIDTH * CELL_SIZE) as f32;
             }
         }
         World {
             width: WORLD_WIDTH,
             height: WORLD.len() as u32 / WORLD_WIDTH,
             start,
+            carrot,
         }
     }
 

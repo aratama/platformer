@@ -12,7 +12,9 @@ impl Vector2 {
     }
 
     pub fn distance(&self, v: Vector2) -> f32 {
-        f32::sqrt(self.x * v.x + self.y * v.y)
+        let dx = self.x - v.x;
+        let dy = self.y - v.y;
+        f32::sqrt(dx * dx + dy * dy)
     }
 
     pub fn length(&self) -> f32 {

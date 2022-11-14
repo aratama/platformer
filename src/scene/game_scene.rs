@@ -209,7 +209,11 @@ impl GameScene {
             };
         }
 
-        Scene::GameScene
+        if self.player.position.distance(self.world.carrot) < CELL_SIZE as f32 {
+            Scene::EndingScene
+        } else {
+            Scene::GameScene
+        }
     }
 }
 
