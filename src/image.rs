@@ -1,5 +1,6 @@
 pub mod board_right;
 pub mod board_up;
+pub mod carrot;
 pub mod climb;
 pub mod jump;
 pub mod ladder;

@@ -2,6 +2,7 @@ use crate::geometry::vector2::Vector2;
 use crate::graphics::Graphics;
 use crate::image::board_right::BOARD_RIGHT_IMAGE;
 use crate::image::board_up::BOARD_UP_IMAGE;
+use crate::image::carrot::CARROT_IMAGE;
 use crate::image::ladder::LADDER_IMAGE;
 use crate::image::sting::STING_IMAGE;
 use crate::image::tile::TILE_IMAGE;
@@ -25,6 +26,7 @@ pub enum Block {
     UpArrow,
     Ladder,
     Sting,
+    Carrot,
 }
 
 impl World {
@@ -59,6 +61,8 @@ impl World {
                 return Block::Ladder;
             } else if s == "^" {
                 return Block::Sting;
+            } else if s == "$" {
+                return Block::Carrot;
             } else {
                 return Block::Empty;
             }
@@ -174,6 +178,16 @@ impl World {
                         g.set_draw_color(0x4442);
                         g.draw(
                             &STING_IMAGE,
+                            (CELL_SIZE * x) as i32,
+                            (CELL_SIZE * y) as i32,
+                            0,
+                        );
+                    }
+
+                    Block::Carrot => {
+                        g.set_draw_color(0x4320);
+                        g.draw(
+                            &CARROT_IMAGE,
                             (CELL_SIZE * x) as i32,
                             (CELL_SIZE * y) as i32,
                             0,
