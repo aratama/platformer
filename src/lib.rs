@@ -15,23 +15,19 @@
 //     NonThreadsafeAlloc::new(fast_param, buddy_param)
 // };
 
-mod aabb;
 // #[cfg(feature = "buddy-alloc")]
 mod alloc;
 mod animation;
 mod body;
-mod direction;
 mod game;
-mod game_scene;
+mod geometry;
 mod graphics;
 mod image;
 mod input;
 mod palette;
-mod point;
 mod save;
+mod scene;
 mod sound;
-mod title_scene;
-mod vector2;
 mod wasm4;
 mod world;
 mod world_map;

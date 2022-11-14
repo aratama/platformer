@@ -1,4 +1,4 @@
-use crate::vector2::Vector2;
+use crate::geometry::vector2::Vector2;
 
 #[derive(Clone, Copy)]
 pub struct AABB {

@@ -1,4 +1,4 @@
-use crate::direction::Direction;
+use crate::geometry::direction::Direction;
 use crate::wasm4;
 
 #[derive(Clone, Copy)]

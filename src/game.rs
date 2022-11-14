@@ -1,14 +1,11 @@
-use crate::{game_scene::GameScene, title_scene::TitleScene};
+use crate::scene::game_scene::GameScene;
+use crate::scene::title_scene::TitleScene;
+use crate::scene::Scene;
 
 pub struct Game {
     scene: Scene,
     title_scene: TitleScene,
     game_scene: GameScene,
-}
-
-pub enum Scene {
-    TitleScene,
-    GameScene,
 }
 
 impl Game {

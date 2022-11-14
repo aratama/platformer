@@ -1,6 +1,7 @@
-use crate::aabb::AABB;
 use crate::animation::walk::WALK_ANIMATION;
-use crate::direction::Direction;
+use crate::geometry::aabb::AABB;
+use crate::geometry::direction::Direction;
+use crate::geometry::vector2::Vector2;
 use crate::graphics::Graphics;
 use crate::image::climb::CLIMB_IMAGE;
 use crate::image::jump::JUMP_IMAGE;
@@ -11,7 +12,6 @@ use crate::image::slip::SLIP_IMAGE;
 use crate::image::Image;
 use crate::input::Inputs;
 use crate::sound::{play, Sound};
-use crate::vector2::Vector2;
 use crate::wasm4;
 use crate::world::{Block, World, CELL_SIZE};
 

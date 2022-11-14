@@ -1,3 +1,4 @@
+use crate::geometry::vector2::Vector2;
 use crate::graphics::Graphics;
 use crate::image::board_right::BOARD_RIGHT_IMAGE;
 use crate::image::board_up::BOARD_UP_IMAGE;
@@ -5,7 +6,6 @@ use crate::image::ladder::LADDER_IMAGE;
 use crate::image::sting::STING_IMAGE;
 use crate::image::tile::TILE_IMAGE;
 use crate::palette::set_draw_color;
-use crate::vector2::Vector2;
 use crate::wasm4;
 use crate::world_map::{WORLD, WORLD_WIDTH};
 pub const CELL_SIZE: u32 = 8;

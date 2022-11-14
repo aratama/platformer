@@ -1,11 +1,11 @@
 use crate::body::Body;
-use crate::game::Scene;
+use crate::geometry::vector2::Vector2;
 use crate::graphics::Graphics;
 use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
 use crate::palette::set_draw_color;
 use crate::save::{load, save, GameData, GAME_DATA_VERSION};
-use crate::vector2::Vector2;
+use crate::scene::Scene;
 use crate::wasm4;
 use crate::world::{World, CELL_SIZE};
 use crate::world_map::WORLD_HEIGHT;

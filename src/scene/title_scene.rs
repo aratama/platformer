@@ -1,5 +1,5 @@
-use crate::game::Scene;
 use crate::input::Inputs;
+use crate::scene::Scene;
 use crate::wasm4::*;
 
 use crate::image::title::TITLE_IMAGE;
