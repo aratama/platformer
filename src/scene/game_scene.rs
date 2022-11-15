@@ -12,15 +12,17 @@ use crate::world_map::WORLD_HEIGHT;
 use fastrand::Rng;
 use std::str;
 
+use super::ending_scene::EndingScene;
+
 const MIN_PLAYER_LOOKUP: i32 = -60;
 const MAX_PLAYER_LOOKUP: i32 = 70;
 
+#[derive(Clone)]
 pub struct GameScene {
     rng: Rng,
     frame_count: u32,
     player: Body,
     player_lookup: i32,
-    prev_gamepad: u8,
     fruits: std::vec::Vec<Body>,
     world: World,
     debug: bool,
@@ -62,7 +64,6 @@ impl GameScene {
             frame_count: 0,
             player,
             player_lookup: MIN_PLAYER_LOOKUP,
-            prev_gamepad: 0,
             fruits,
             rng,
             world,
@@ -71,18 +72,12 @@ impl GameScene {
         }
     }
 
-    pub fn update(&mut self) -> Scene {
+    pub fn update(&mut self, inputs: &Inputs) -> Option<Scene> {
         // updates
-
-        let gamepad = unsafe { *wasm4::GAMEPAD1 };
 
         self.frame_count += 1;
 
-        let inputs = Inputs::new(gamepad, self.prev_gamepad);
-
         self.player.input(&inputs, &self.world);
-
-        self.prev_gamepad = unsafe { *wasm4::GAMEPAD1 };
 
         self.player
             .physical_update(inputs.horizontal_acceralation() as i32, &self.world);
@@ -210,9 +205,9 @@ impl GameScene {
         }
 
         if self.player.position.distance(self.world.carrot) < CELL_SIZE as f32 {
-            Scene::EndingScene
+            Option::Some(Scene::EndingScene(EndingScene::new()))
         } else {
-            Scene::GameScene
+            Option::None
         }
     }
 }

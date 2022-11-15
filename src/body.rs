@@ -53,6 +53,7 @@ const AIR_RESISTANCE_Y: f32 = 0.98;
 
 const CLING_MERGIN: f32 = 2.0;
 
+#[derive(Clone, Copy)]
 pub struct Body {
     pub name: &'static str,
 

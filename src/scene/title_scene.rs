@@ -5,6 +5,9 @@ use crate::wasm4::*;
 use crate::image::title::TITLE_IMAGE;
 use crate::palette::set_draw_color;
 
+use super::game_scene::GameScene;
+
+#[derive(Clone, Copy)]
 pub struct TitleScene {
     prev_gamepad: u8,
 }
@@ -14,18 +17,15 @@ impl TitleScene {
         TitleScene { prev_gamepad: 0 }
     }
 
-    pub fn update(&mut self) -> Scene {
-        let gamepad = unsafe { *GAMEPAD1 };
-        let inputs = Inputs::new(gamepad, self.prev_gamepad);
-
+    pub fn update(&mut self, inputs: &Inputs) -> Option<Scene> {
         self.draw_title_image();
 
         self.prev_gamepad = unsafe { *GAMEPAD1 };
 
         if inputs.is_any_button_just_pressed() {
-            Scene::GameScene
+            Option::Some(Scene::GameScene(GameScene::new()))
         } else {
-            Scene::TitleScene
+            Option::None
         }
     }
 

@@ -11,6 +11,7 @@ use crate::wasm4;
 use crate::world_map::{WORLD, WORLD_WIDTH};
 pub const CELL_SIZE: u32 = 8;
 
+#[derive(Clone, Copy)]
 pub struct World {
     width: u32,
     height: u32,
