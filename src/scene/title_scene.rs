@@ -1,5 +1,6 @@
 use crate::input::Inputs;
 use crate::scene::Scene;
+use crate::sound::{music, TITLE_BGM_SCORE};
 use crate::wasm4::*;
 
 use crate::image::title::TITLE_IMAGE;
@@ -9,18 +10,18 @@ use super::game_scene::GameScene;
 
 #[derive(Clone, Copy)]
 pub struct TitleScene {
-    prev_gamepad: u8,
+    music_position: u32,
 }
 
 impl TitleScene {
     pub fn new() -> Self {
-        TitleScene { prev_gamepad: 0 }
+        TitleScene { music_position: 0 }
     }
 
     pub fn update(&mut self, inputs: &Inputs) -> Option<Scene> {
         self.draw_title_image();
 
-        self.prev_gamepad = unsafe { *GAMEPAD1 };
+        music(TITLE_BGM_SCORE, &mut self.music_position, -10);
 
         if inputs.is_any_button_just_pressed() {
             Option::Some(Scene::GameScene(GameScene::new()))

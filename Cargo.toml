@@ -14,15 +14,16 @@ fastrand = "1.6.0"
 lazy_static = "1.4.0"
 
 [profile.dev]
-# なぜか opt-level = 0 や 's' など特定の値で rust-lld でエラーになる
+# なぜか opt-level の特定の値で rust-lld でエラーになる
+# s で通るときと z で通るときがある？
 # よくわからないが https://github.com/rust-lang/rust/issues/46645#issuecomment-423912553
 # で言われている問題？
-opt-level = 'z'
+opt-level = 's'
 
 [profile.release]
 debug = false
 lto = true
-opt-level = 's'
+opt-level = 'z'
 panic = 'abort'
 
 [features]
