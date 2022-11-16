@@ -3,6 +3,7 @@ use crate::scene::ending_scene::EndingScene;
 use crate::scene::game_scene::GameScene;
 use crate::scene::title_scene::TitleScene;
 use crate::scene::Scene;
+use crate::sound::update_bgm;
 use crate::wasm4;
 
 pub struct Game {
@@ -37,5 +38,7 @@ impl Game {
             Option::Some(next) => self.scene = next,
         }
         self.prev_gamepad = unsafe { *wasm4::GAMEPAD1 };
+
+        update_bgm();
     }
 }

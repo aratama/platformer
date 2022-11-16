@@ -1,6 +1,6 @@
 use crate::input::Inputs;
 use crate::scene::Scene;
-use crate::sound::{music, TITLE_BGM_SCORE};
+use crate::sound::{set_bgm, TITLE_BGM_SCORE};
 use crate::wasm4::*;
 
 use crate::image::title::TITLE_IMAGE;
@@ -21,9 +21,8 @@ impl TitleScene {
     pub fn update(&mut self, inputs: &Inputs) -> Option<Scene> {
         self.draw_title_image();
 
-        music(TITLE_BGM_SCORE, &mut self.music_position, -10);
-
         if inputs.is_any_button_just_pressed() {
+            // set_bgm(Option::Some(TITLE_BGM_SCORE));
             Option::Some(Scene::GameScene(GameScene::new()))
         } else {
             Option::None

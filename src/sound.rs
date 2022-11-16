@@ -19,12 +19,36 @@ pub fn play(sound: Sound) {
     wasm4::tone(freq, duration, sound.volume, flags);
 }
 
-pub fn music(channels: &Music, current_position: &mut u32, pitch_offset: i32) {
-    for (channel, notes) in channels.iter().enumerate() {
+static mut bgm_music_count: u32 = 0;
+static mut current_bgm: Option<&'static Music> = Option::None;
+
+pub fn set_bgm(bgm: Option<&'static Music>) {
+    unsafe {
+        bgm_music_count = 0;
+        current_bgm = bgm;
+    }
+}
+
+pub fn update_bgm() {
+    unsafe {
+        if let Option::Some(m) = current_bgm {
+            music(m, &mut bgm_music_count, 0, true);
+        };
+    }
+}
+
+pub fn music(music: &Music, music_count: &mut u32, pitch_offset: i32, loop_music: bool) {
+    let current_position = if loop_music {
+        *music_count % music_length(&music)
+    } else {
+        *music_count
+    };
+
+    for (channel, notes) in music.iter().enumerate() {
         let mut position = 0;
         for note in *notes {
             let [note_number, release] = *note;
-            if position == *current_position && note_number != 0 {
+            if position == current_position && note_number != 0 {
                 let freq = note_to_frequency((note_number as i32 + pitch_offset) as u32);
                 play(Sound {
                     freq1: freq,
@@ -42,7 +66,7 @@ pub fn music(channels: &Music, current_position: &mut u32, pitch_offset: i32) {
         }
     }
 
-    *current_position = *current_position + 1;
+    *music_count = *music_count + 1;
 }
 
 // [Pitch, Release]
@@ -51,6 +75,19 @@ type Note = [u32; 2];
 type Track = &'static [Note];
 
 type Music = [Track; 4];
+
+fn music_length(music: &Music) -> u32 {
+    let mut len: u32 = 0;
+    for notes in music.iter() {
+        let mut position = 0;
+        for note in *notes {
+            let [_, release] = *note;
+            position += release;
+        }
+        len = u32::max(len, position);
+    }
+    len
+}
 
 pub static TITLE_BGM_SCORE: &Music = &[
     &[
