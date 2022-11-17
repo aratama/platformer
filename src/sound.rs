@@ -47,7 +47,7 @@ pub fn music(music: &Music, music_count: &mut u32, pitch_offset: i32, loop_music
     for (channel, notes) in music.iter().enumerate() {
         let mut position = 0;
         for note in *notes {
-            let [note_number, release] = *note;
+            let (note_number, release) = *note;
             if position == current_position && note_number != 0 {
                 let freq = note_to_frequency((note_number as i32 + pitch_offset) as u32);
                 play(Sound {
@@ -69,8 +69,8 @@ pub fn music(music: &Music, music_count: &mut u32, pitch_offset: i32, loop_music
     *music_count = *music_count + 1;
 }
 
-// [Pitch, Release]
-type Note = [u32; 2];
+// (Pitch, Release)
+type Note = (u32, u32);
 
 type Track = &'static [Note];
 
@@ -81,7 +81,7 @@ fn music_length(music: &Music) -> u32 {
     for notes in music.iter() {
         let mut position = 0;
         for note in *notes {
-            let [_, release] = *note;
+            let (_, release) = *note;
             position += release;
         }
         len = u32::max(len, position);
@@ -90,38 +90,38 @@ fn music_length(music: &Music) -> u32 {
 }
 
 pub static TITLE_BGM_SCORE: &Music = &[
-    &[
-        [00, 60],
-        [60, 10],
-        [62, 10],
-        [64, 10],
-        [65, 10],
-        [67, 20],
-        [00, 10],
-        [67, 10],
-        [67, 10],
-        [00, 10],
-        [69, 20],
-        [00, 10],
-        [69, 10],
-        [69, 10],
-        [00, 10],
-        [71, 100],
-    ],
     &[],
     &[
-        [00, 100],
-        [60, 20],
-        [00, 10],
-        [60, 10],
-        [60, 10],
-        [00, 10],
-        [62, 20],
-        [00, 10],
-        [62, 10],
-        [62, 10],
-        [00, 10],
-        [64, 100],
+        (00, 60),
+        (60, 10),
+        (62, 10),
+        (64, 10),
+        (65, 10),
+        (67, 20),
+        (00, 10),
+        (67, 10),
+        (67, 10),
+        (00, 10),
+        (69, 20),
+        (00, 10),
+        (69, 10),
+        (69, 10),
+        (00, 10),
+        (71, 100),
+    ],
+    &[
+        (00, 100),
+        (60, 20),
+        (00, 10),
+        (60, 10),
+        (60, 10),
+        (00, 10),
+        (62, 20),
+        (00, 10),
+        (62, 10),
+        (62, 10),
+        (00, 10),
+        (64, 100),
     ],
     &[],
 ];

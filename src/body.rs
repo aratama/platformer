@@ -569,7 +569,7 @@ fn play_jump_se() {
         sustain: 0,
         release: 31,
         volume: 18,
-        channel: 68,
+        channel: 0,
         mode: 1,
     })
 }
