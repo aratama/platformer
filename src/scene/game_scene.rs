@@ -131,15 +131,16 @@ impl GameScene {
             dy,
         };
 
-        set_draw_color(0x02);
+        // set_draw_color(0x02);
         for i in 0..10 {
             let h = (i * 10) as f32 * CELL_SIZE as f32;
             if self.score < h as f32 {
-                let y = (dy as f32 + ((WORLD_HEIGHT - i * 10) as f32 * CELL_SIZE as f32)) as i32;
-                for x in 0..(wasm4::SCREEN_SIZE / 8) {
-                    wasm4::hline(x as i32 * 8, y, 4);
-                }
-                wasm4::text(int_to_string(i * 10), 1, y + 2);
+                // let y = (dy as f32 + ((WORLD_HEIGHT - i * 10) as f32 * CELL_SIZE as f32)) as i32;
+                // ここでエラーになる？
+                // for x in 0..(wasm4::SCREEN_SIZE / 8) {
+                //     wasm4::hline(x as i32 * 8, y, 4);
+                // }
+                // wasm4::text(int_to_string(i * 10), 1, y + 2);
             }
         }
 
@@ -152,7 +153,7 @@ impl GameScene {
             fruit.draw(graphics, &self.world, &inputs);
         }
 
-        // Stingとの衝突判定
+        // // Stingとの衝突判定
         for sting in self.player.get_stings(&self.world) {
             if sting.intersect(self.player.get_aabb()) {
                 play_smash_se();

@@ -1,11 +1,13 @@
 use crate::input::Inputs;
 use crate::scene::Scene;
+use crate::sound::set_bgm;
 use crate::wasm4::*;
 
 use crate::image::title::TITLE_IMAGE;
 use crate::palette::set_draw_color;
 
 use super::game_scene::GameScene;
+use crate::music::level::LEVEL_BGM_SCORE;
 
 #[derive(Clone, Copy)]
 pub struct TitleScene {
@@ -21,7 +23,7 @@ impl TitleScene {
         self.draw_title_image();
 
         if inputs.is_any_button_just_pressed() {
-            // set_bgm(Option::Some(TITLE_BGM_SCORE));
+            set_bgm(Option::Some(LEVEL_BGM_SCORE));
             Option::Some(Scene::GameScene(GameScene::new()))
         } else {
             Option::None

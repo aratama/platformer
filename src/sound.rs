@@ -71,11 +71,11 @@ pub fn music(music: &Music, music_count: &mut u32, pitch_offset: i32, loop_music
 }
 
 // (Pitch, Release)
-type Note = (u32, u32);
+pub type Note = (u32, u32);
 
-type Track = &'static [Note];
+pub type Track = &'static [Note];
 
-type Music = [Track; 4];
+pub type Music = [Track; 4];
 
 fn music_length(music: &Music) -> u32 {
     let mut len: u32 = 0;
@@ -89,43 +89,6 @@ fn music_length(music: &Music) -> u32 {
     }
     len
 }
-
-pub static TITLE_BGM_SCORE: &Music = &[
-    &[],
-    &[
-        (00, 60),
-        (60, 10),
-        (62, 10),
-        (64, 10),
-        (65, 10),
-        (67, 20),
-        (00, 10),
-        (67, 10),
-        (67, 10),
-        (00, 10),
-        (69, 20),
-        (00, 10),
-        (69, 10),
-        (69, 10),
-        (00, 10),
-        (71, 100),
-    ],
-    &[
-        (00, 100),
-        (60, 20),
-        (00, 10),
-        (60, 10),
-        (60, 10),
-        (00, 10),
-        (62, 20),
-        (00, 10),
-        (62, 10),
-        (62, 10),
-        (00, 10),
-        (64, 100),
-    ],
-    &[],
-];
 
 // https://en.wikipedia.org/wiki/MIDI_tuning_standard
 fn note_to_frequency(d: u32) -> u32 {

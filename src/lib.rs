@@ -24,6 +24,7 @@ mod geometry;
 mod graphics;
 mod image;
 mod input;
+mod music;
 mod palette;
 mod save;
 mod scene;

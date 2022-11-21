@@ -1,9 +1,10 @@
 use crate::input::Inputs;
+use crate::music::level::LEVEL_BGM_SCORE;
 use crate::scene::ending_scene::EndingScene;
 use crate::scene::game_scene::GameScene;
 use crate::scene::title_scene::TitleScene;
 use crate::scene::Scene;
-use crate::sound::update_bgm;
+use crate::sound::{set_bgm, update_bgm};
 use crate::wasm4;
 
 pub struct Game {
@@ -16,6 +17,8 @@ pub struct Game {
 
 impl Game {
     pub fn new() -> Self {
+        set_bgm(Some(&LEVEL_BGM_SCORE));
+
         Game {
             prev_gamepad: 0,
             scene: Scene::TitleScene(TitleScene::new()),
