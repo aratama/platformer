@@ -45,10 +45,10 @@ pub fn music(music: &Music, music_count: &mut u32, pitch_offset: i32, loop_music
         *music_count
     };
 
-    for (channel, notes) in music.iter().enumerate() {
+    for (channel, track) in music.iter().enumerate() {
         let mut position = 0;
-        for note in *notes {
-            let (note_number, release) = *note;
+        for note in (*track).notes {
+            let (note_number, release, wait) = *note;
             if position == current_position && note_number != 0 {
                 let freq = note_to_frequency((note_number as i32 + pitch_offset) as u32);
                 play(Sound {
@@ -58,12 +58,12 @@ pub fn music(music: &Music, music_count: &mut u32, pitch_offset: i32, loop_music
                     decay: 0,
                     sustain: release / 2,
                     release: release / 2,
-                    volume: 50,
+                    volume: (*track).volume,
                     channel: channel as u32,
                     mode: 0,
                 })
             }
-            position += release;
+            position += release + wait;
         }
     }
 
@@ -71,19 +71,22 @@ pub fn music(music: &Music, music_count: &mut u32, pitch_offset: i32, loop_music
 }
 
 // (Pitch, Release)
-pub type Note = (u32, u32);
+pub type Note = (u32, u32, u32);
 
-pub type Track = &'static [Note];
+pub struct Track {
+    pub notes: &'static [Note],
+    pub volume: u32,
+}
 
 pub type Music = [Track; 4];
 
 fn music_length(music: &Music) -> u32 {
     let mut len: u32 = 0;
-    for notes in music.iter() {
+    for track in music.iter() {
         let mut position = 0;
-        for note in *notes {
-            let (_, release) = *note;
-            position += release;
+        for note in (*track).notes {
+            let (_, release, wait) = *note;
+            position += release + wait;
         }
         len = u32::max(len, position);
     }
