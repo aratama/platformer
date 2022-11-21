@@ -1,4 +1,4 @@
-use crate::body::Body;
+use crate::body::{play_smash_se, Body};
 use crate::geometry::vector2::Vector2;
 use crate::graphics::Graphics;
 use crate::image::player::PLAYER_IMAGE;
@@ -27,6 +27,7 @@ pub struct GameScene {
     world: World,
     debug: bool,
     score: f32,
+    vibration: i32,
 }
 
 impl GameScene {
@@ -69,6 +70,7 @@ impl GameScene {
             world,
             debug: false,
             score: 0.0,
+            vibration: 0,
         }
     }
 
@@ -114,6 +116,8 @@ impl GameScene {
             wasm4::trace(int_to_string(loaded.y as u32));
         }
 
+        self.vibration = i32::max(0, self.vibration - 1);
+
         // renders
 
         let player_center = self.player.center();
@@ -123,7 +127,7 @@ impl GameScene {
         let graphics = Graphics {
             frame_count: self.frame_count,
             debug: self.debug,
-            dx,
+            dx: dx + (self.vibration as f32 * f32::cos(self.frame_count as f32 * 0.5)) as i32,
             dy,
         };
 
@@ -146,6 +150,20 @@ impl GameScene {
 
         for fruit in self.fruits.iter() {
             fruit.draw(graphics, &self.world, &inputs);
+        }
+
+        // Stingとの衝突判定
+        for sting in self.player.get_stings(&self.world) {
+            if sting.intersect(self.player.get_aabb()) {
+                play_smash_se();
+                const STING_POWER: f32 = 1.0;
+                let vec = self.player.position - sting.get_center();
+                self.player.velocity.x = if 0.0 < vec.x { 1.0 } else { -1.0 } * 2.5;
+                if self.player.is_grounded(&self.world) {
+                    self.player.velocity.y = -3.0;
+                }
+                self.vibration = 16
+            }
         }
 
         // score

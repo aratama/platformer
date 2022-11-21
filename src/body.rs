@@ -228,7 +228,7 @@ impl Body {
     /**
      * プレイヤーキャラクター周辺の、接触する可能性のある針を取得します
      */
-    fn get_stings(&self, world: &World) -> Vec<AABB> {
+    pub fn get_stings(&self, world: &World) -> Vec<AABB> {
         let px = (self.position.x / CELL_SIZE as f32).floor() as i32;
         let py = (self.position.y / CELL_SIZE as f32).floor() as i32;
         let mut walls: Vec<AABB> = vec![];
@@ -249,7 +249,7 @@ impl Body {
         walls
     }
 
-    fn get_aabb(&self) -> AABB {
+    pub fn get_aabb(&self) -> AABB {
         AABB {
             x: self.position.x,
             y: self.position.y,
@@ -473,19 +473,6 @@ impl Body {
             }
         }
 
-        // Stingとの衝突判定
-        for sting in self.get_stings(world) {
-            if sting.intersect(self.get_aabb()) {
-                play_smash_se();
-                const STING_POWER: f32 = 1.0;
-                let vec = self.position - sting.get_center();
-                self.velocity.x = if 0.0 < vec.x { 1.0 } else { -1.0 } * 2.5;
-                if self.is_grounded(world) {
-                    self.velocity.y = -3.0;
-                }
-            }
-        }
-
         // wasm4::trace(format!("x {}", self.position.x));
 
         self.wait = i32::max(0, self.wait - 1);
@@ -574,7 +561,7 @@ fn play_jump_se() {
     })
 }
 
-fn play_smash_se() {
+pub fn play_smash_se() {
     play(Sound {
         freq1: 140,
         freq2: 70,
