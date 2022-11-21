@@ -19,20 +19,21 @@ pub fn play(sound: Sound) {
     wasm4::tone(freq, duration, sound.volume, flags);
 }
 
-static mut bgm_music_count: u32 = 0;
-static mut current_bgm: Option<&'static Music> = Option::None;
+static mut BGM_MUSIC_COUNT: u32 = 0;
+
+static mut CURRENT_BGM: Option<&'static Music> = Option::None;
 
 pub fn set_bgm(bgm: Option<&'static Music>) {
     unsafe {
-        bgm_music_count = 0;
-        current_bgm = bgm;
+        BGM_MUSIC_COUNT = 0;
+        CURRENT_BGM = bgm;
     }
 }
 
 pub fn update_bgm() {
     unsafe {
-        if let Option::Some(m) = current_bgm {
-            music(m, &mut bgm_music_count, 0, true);
+        if let Option::Some(m) = CURRENT_BGM {
+            music(m, &mut BGM_MUSIC_COUNT, 0, true);
         };
     }
 }

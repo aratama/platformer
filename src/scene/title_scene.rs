@@ -1,6 +1,5 @@
 use crate::input::Inputs;
 use crate::scene::Scene;
-use crate::sound::{set_bgm, TITLE_BGM_SCORE};
 use crate::wasm4::*;
 
 use crate::image::title::TITLE_IMAGE;
