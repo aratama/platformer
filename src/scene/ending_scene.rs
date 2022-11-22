@@ -1,5 +1,7 @@
 use crate::input::Inputs;
+use crate::music::goal::GOAL_BGM_SCORE;
 use crate::scene::Scene;
+use crate::sound::set_bgm;
 use crate::wasm4::*;
 
 use crate::palette::set_draw_color;
@@ -17,6 +19,8 @@ impl EndingScene {
     pub fn update(&mut self, inputs: &Inputs) -> Option<Scene> {
         set_draw_color(0x34);
         text("You Win", 10, 10);
+
+        set_bgm(Some(&GOAL_BGM_SCORE));
 
         if inputs.is_any_button_just_pressed() {
             Option::Some(Scene::TitleScene(TitleScene::new()))

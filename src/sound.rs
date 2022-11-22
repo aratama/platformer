@@ -25,7 +25,18 @@ static mut CURRENT_BGM: Option<&'static Music> = Option::None;
 
 pub fn set_bgm(bgm: Option<&'static Music>) {
     unsafe {
-        BGM_MUSIC_COUNT = 0;
+        let reset = match (CURRENT_BGM, bgm) {
+            (Some(r), Some(s)) => {
+                let a: *const Music = r;
+                let b: *const Music = s;
+                a != b
+            }
+            _ => true,
+        };
+
+        if reset {
+            BGM_MUSIC_COUNT = 0;
+        }
         CURRENT_BGM = bgm;
     }
 }
@@ -45,7 +56,7 @@ pub fn music(music: &Music, music_count: &mut u32, pitch_offset: i32, loop_music
         *music_count
     };
 
-    for (channel, track) in music.iter().enumerate() {
+    for (channel, track) in music.tracks.iter().enumerate() {
         let mut position = 0;
         for note in (*track).notes {
             let (note_number, release, wait) = *note;
@@ -56,14 +67,14 @@ pub fn music(music: &Music, music_count: &mut u32, pitch_offset: i32, loop_music
                     freq2: freq,
                     attack: 0,
                     decay: 0,
-                    sustain: release / 2,
-                    release: release / 2,
+                    sustain: music.unit * release / 2,
+                    release: music.unit * release / 2 - 1, // -1でずらさないと直後の音と被ってノイズが生じる
                     volume: (*track).volume,
                     channel: channel as u32,
                     mode: 0,
                 })
             }
-            position += release + wait;
+            position += music.unit * (release + wait);
         }
     }
 
@@ -78,15 +89,18 @@ pub struct Track {
     pub volume: u32,
 }
 
-pub type Music = [Track; 4];
+pub struct Music {
+    pub unit: u32,
+    pub tracks: [Track; 4],
+}
 
 fn music_length(music: &Music) -> u32 {
     let mut len: u32 = 0;
-    for track in music.iter() {
+    for track in music.tracks.iter() {
         let mut position = 0;
         for note in (*track).notes {
             let (_, release, wait) = *note;
-            position += release + wait;
+            position += music.unit * (release + wait);
         }
         len = u32::max(len, position);
     }

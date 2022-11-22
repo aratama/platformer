@@ -3,9 +3,11 @@ use crate::geometry::vector2::Vector2;
 use crate::graphics::Graphics;
 use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
+use crate::music::level::LEVEL_BGM_SCORE;
 use crate::palette::set_draw_color;
 use crate::save::{load, save, GameData, GAME_DATA_VERSION};
 use crate::scene::Scene;
+use crate::sound::set_bgm;
 use crate::wasm4;
 use crate::world::{World, CELL_SIZE};
 use crate::world_map::WORLD_HEIGHT;
@@ -185,43 +187,7 @@ impl GameScene {
         }
 
         // bgm
-
-        let channel1 = "d.....d.....d...";
-        let channel2 = "*.*.*.*.*.*.*.*.";
-
-        let tempo = 8;
-        let i = (self.frame_count / tempo) % 16;
-        if self.frame_count % tempo == 0 {
-            if channel1.as_bytes()[i as usize] == b'd' {
-                // wasm4::trace("d");
-                // play(Sound {
-                //     freq1: 300,
-                //     freq2: 0,
-                //     attack: 0,
-                //     decay: 6,
-                //     sustain: 0,
-                //     release: 6,
-                //     volume: 1,
-                //     channel: 3,
-                //     mode: 0,
-                // })
-                // wasm4::tone(500, 3, 5, 3);
-            }
-            if channel2.as_bytes()[i as usize] == b'*' {
-                // wasm4::trace("*");
-                // play(Sound {
-                //     freq1: 50,
-                //     freq2: 0,
-                //     attack: 0,
-                //     decay: 6,
-                //     sustain: 0,
-                //     release: 6,
-                //     volume: 100,
-                //     channel: 2,
-                //     mode: 0,
-                // })
-            };
-        }
+        set_bgm(Option::Some(LEVEL_BGM_SCORE));
 
         if self.player.position.distance(self.world.carrot) < CELL_SIZE as f32 {
             Option::Some(Scene::EndingScene(EndingScene::new()))
