@@ -18,7 +18,7 @@ impl EndingScene {
 
     pub fn update(&mut self, inputs: &Inputs) -> Option<Scene> {
         set_draw_color(0x34);
-        text("You Win", 10, 10);
+        text("You Win!", 10, 10);
 
         set_bgm(Some(&GOAL_BGM_SCORE));
 
