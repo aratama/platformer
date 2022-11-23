@@ -10,4 +10,4 @@ npx wasm-opt -Oz --zero-filled-memory --strip-producers --dce target/wasm32-unkn
 
 ls -l target/wasm32-unknown-unknown/release/cart.wasm
 ls -l target/wasm32-unknown-unknown/release/towerclimber.wasm
-w4 bundle target/wasm32-unknown-unknown/release/towerclimber.wasm --title "Tower Climber" --html ./docs/index.html
+w4 bundle target/wasm32-unknown-unknown/release/towerclimber.wasm --title "Tower Climber" --html-template html.mustache --html-disk-prefix towerclimber --html ./docs/index.html
