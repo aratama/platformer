@@ -25,6 +25,7 @@ mod graphics;
 mod image;
 mod input;
 mod music;
+mod netplay;
 mod palette;
 mod save;
 mod scene;
