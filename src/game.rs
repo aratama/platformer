@@ -1,5 +1,5 @@
 use crate::input::Inputs;
-use crate::scene::ending_scene::EndingScene;
+
 use crate::scene::game_scene::GameScene;
 use crate::scene::title_scene::TitleScene;
 use crate::scene::Scene;
@@ -9,9 +9,6 @@ use crate::wasm4;
 pub struct Game {
     prev_gamepad: u8,
     scene: Scene,
-    title_scene: TitleScene,
-    game_scene: GameScene,
-    ending_scene: EndingScene,
 }
 
 impl Game {
@@ -19,9 +16,6 @@ impl Game {
         Game {
             prev_gamepad: 0,
             scene: Scene::TitleScene(TitleScene::new()),
-            title_scene: TitleScene::new(),
-            game_scene: GameScene::new(),
-            ending_scene: EndingScene::new(),
         }
     }
 

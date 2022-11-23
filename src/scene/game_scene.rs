@@ -105,18 +105,18 @@ impl GameScene {
             (WORLD_HEIGHT as f32 * CELL_SIZE as f32 - (self.player.position.y)) as f32,
         );
 
-        if inputs.is_button_just_pressed(wasm4::BUTTON_2) {
-            // self.debug = !self.debug;
-            let game_data: GameData = GameData {
-                version: GAME_DATA_VERSION,
-                x: self.player.position.x,
-                y: self.player.position.y,
-            };
-            save(&game_data);
-            let loaded: GameData = load();
-            wasm4::trace(int_to_string(loaded.x as u32));
-            wasm4::trace(int_to_string(loaded.y as u32));
-        }
+        // if inputs.is_button_just_pressed(wasm4::BUTTON_2) {
+        //     // self.debug = !self.debug;
+        //     let game_data: GameData = GameData {
+        //         version: GAME_DATA_VERSION,
+        //         x: self.player.position.x,
+        //         y: self.player.position.y,
+        //     };
+        //     save(&game_data);
+        //     let loaded: GameData = load();
+        //     wasm4::trace(int_to_string(loaded.x as u32));
+        //     wasm4::trace(int_to_string(loaded.y as u32));
+        // }
 
         self.vibration = i32::max(0, self.vibration - 1);
 
