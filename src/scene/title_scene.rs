@@ -19,13 +19,13 @@ impl TitleScene {
         TitleScene { music_position: 0 }
     }
 
-    pub fn update(&mut self, inputs: &Inputs) -> Option<Scene> {
+    pub fn update(&mut self, inputs: &Inputs, player_active: &[bool; 4]) -> Option<Scene> {
         self.draw_title_image();
 
-        set_bgm(Some(&LEVEL_BGM_SCORE));
+        // set_bgm(Some(&LEVEL_BGM_SCORE));
 
         if inputs.is_any_button_just_pressed() {
-            Option::Some(Scene::GameScene(GameScene::new()))
+            Option::Some(Scene::GameScene(GameScene::new(player_active)))
         } else {
             Option::None
         }

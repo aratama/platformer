@@ -11,6 +11,7 @@ use crate::image::player::PLAYER_IMAGE;
 use crate::image::slip::SLIP_IMAGE;
 use crate::image::Image;
 use crate::input::Inputs;
+use crate::scene::game_scene::get_gamepad;
 use crate::sound::{play, Sound};
 use crate::wasm4;
 use crate::world::{Block, World, CELL_SIZE};
@@ -53,8 +54,13 @@ const AIR_RESISTANCE_Y: f32 = 0.98;
 
 const CLING_MERGIN: f32 = 2.0;
 
+const MIN_PLAYER_LOOKUP: i32 = -60;
+const MAX_PLAYER_LOOKUP: i32 = 70;
+
 #[derive(Clone, Copy)]
 pub struct Body {
+    pub player_index: usize,
+
     pub name: &'static str,
 
     // 衝突判定AABBの左上
@@ -81,6 +87,12 @@ pub struct Body {
     pub climbing_point: Option<Vector2>,
 
     pub wait: i32,
+
+    pub player_lookup: i32,
+    pub vibration: i32,
+    prev_gamepad: u8,
+
+    pub active: bool,
 }
 
 fn sign(v: i32) -> i32 {
@@ -95,6 +107,8 @@ fn sign(v: i32) -> i32 {
 
 impl Body {
     pub fn new(
+        player_index: usize,
+        active: bool,
         name: &'static str,
         position: Vector2,
         image: &'static Image,
@@ -102,6 +116,7 @@ impl Body {
         body_height: f32,
     ) -> Self {
         Self {
+            player_index,
             name,
             position,
             velocity: Vector2::default(),
@@ -112,7 +127,30 @@ impl Body {
             climbing: 0,
             climbing_point: None,
             wait: 0,
+            player_lookup: MIN_PLAYER_LOOKUP,
+            vibration: 0,
+            prev_gamepad: 0,
+            active,
         }
+    }
+
+    pub fn create_player(
+        player_index: usize,
+        active: bool,
+        name: &'static str,
+        player_x: f32,
+        player_y: f32,
+    ) -> Self {
+        Body::new(
+            player_index,
+            active,
+            name,
+            // Vector2::new(CELL_SIZE as f32 * 13.0, CELL_SIZE as f32 * 235.0),
+            Vector2::new(player_x, player_y),
+            &PLAYER_IMAGE,
+            6.0,
+            12.0,
+        )
     }
 
     /**
@@ -157,6 +195,35 @@ impl Body {
         } else {
             self.move_body(0.0, 0.0, world);
         }
+    }
+
+    pub fn update(&mut self, world: &World) {
+        let gamepad = get_gamepad(self.player_index);
+        let inputs = Inputs::new(gamepad, self.prev_gamepad);
+
+        if inputs.is_any_button_just_pressed() {
+            self.active = true;
+        }
+
+        // trace(format!("{}", gamepad));
+
+        self.input(&inputs, world);
+
+        self.physical_update(inputs.horizontal_acceralation() as i32, world);
+
+        if self.is_grounded(world)
+            && f32::abs(self.velocity.x) < 1.0
+            && f32::abs(self.velocity.y) < 1.0
+            && inputs.is_button_pressed(wasm4::BUTTON_UP)
+        {
+            self.player_lookup = i32::min(MAX_PLAYER_LOOKUP, self.player_lookup + 2);
+        } else {
+            self.player_lookup = i32::max(MIN_PLAYER_LOOKUP, self.player_lookup - 4);
+        }
+
+        self.vibration = i32::max(0, self.vibration - 1);
+
+        self.prev_gamepad = gamepad;
     }
 
     pub fn is_grounded(&self, world: &World) -> bool {

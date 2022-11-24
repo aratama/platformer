@@ -4,7 +4,7 @@ use crate::graphics::Graphics;
 use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
 use crate::music::level::LEVEL_BGM_SCORE;
-use crate::netplay::{get_my_player_index, is_netplay_active};
+use crate::netplay::{get_my_net_player_index, is_netplay_active};
 use crate::palette::set_draw_color;
 use crate::save::{load, save, GameData, GAME_DATA_VERSION};
 use crate::scene::Scene;
@@ -26,24 +26,18 @@ pub struct GameScene {
     rng: Rng,
     frame_count: u32,
 
-    player1: Body,
-    player2: Body,
+    players: [Body; 4],
 
-    player_lookup: i32,
     fruits: std::vec::Vec<Body>,
     world: World,
     debug: bool,
     score: f32,
-    vibration: i32,
 
-    player1_prev_gamepad: u8,
-    player2_prev_gamepad: u8,
-    player3_prev_gamepad: u8,
-    player4_prev_gamepad: u8,
+    prev_gamepads: [u8; 4],
 }
 
 impl GameScene {
-    pub fn new() -> Self {
+    pub fn new(player_active: &[bool; 4]) -> Self {
         let rng = Rng::with_seed(235);
 
         let world = World::new();
@@ -51,23 +45,10 @@ impl GameScene {
         let player_x = world.start.x;
         let player_y = world.start.y;
 
-        let player1 = Body::new(
-            "player1",
-            // Vector2::new(CELL_SIZE as f32 * 13.0, CELL_SIZE as f32 * 235.0),
-            Vector2::new(player_x, player_y),
-            &PLAYER_IMAGE,
-            6.0,
-            12.0,
-        );
-
-        let player2 = Body::new(
-            "player2",
-            // Vector2::new(CELL_SIZE as f32 * 13.0, CELL_SIZE as f32 * 235.0),
-            Vector2::new(player_x, player_y),
-            &PLAYER_IMAGE,
-            6.0,
-            12.0,
-        );
+        let player1 = Body::create_player(0, player_active[0], "player1", player_x, player_y);
+        let player2 = Body::create_player(1, player_active[1], "player2", player_x, player_y);
+        let player3 = Body::create_player(2, player_active[2], "player3", player_x, player_y);
+        let player4 = Body::create_player(3, player_active[3], "player4", player_x, player_y);
 
         let fruits = vec![
         //     Body::new(
@@ -84,74 +65,90 @@ impl GameScene {
 
         Self {
             frame_count: 0,
-            player1,
-            player2,
-            player_lookup: MIN_PLAYER_LOOKUP,
+            players: [player1, player2, player3, player4],
             fruits,
             rng,
             world,
             debug: false,
             score: 0.0,
-            vibration: 0,
 
-            player1_prev_gamepad: 0,
-            player2_prev_gamepad: 0,
-            player3_prev_gamepad: 0,
-            player4_prev_gamepad: 0,
-        }
-    }
-
-    fn get_my_player(&mut self) -> &mut Body {
-        match get_my_player_index() {
-            0 => &mut self.player1,
-            1 => &mut self.player2,
-            // Some(2) => Some(&mut self.player3),
-            // Some(3) => Some(&mut self.player4),
-            _ => &mut self.player1,
+            prev_gamepads: [0, 0, 0, 0],
         }
     }
 
     pub fn update(&mut self, inputs: &Inputs) -> Option<Scene> {
-        // updates
-
         self.frame_count += 1;
 
-        let player1_inputs = self.update_player(0);
-        let player2_inputs = self.update_player(1);
+        for (i, player) in self.players.iter_mut().enumerate() {
+            player.update(&self.world);
+        }
 
         for fruit in self.fruits.iter_mut() {
             fruit.physical_update(0, &self.world);
         }
 
-        self.score = f32::max(
-            self.score,
-            (WORLD_HEIGHT as f32 * CELL_SIZE as f32 - (self.player1.position.y)) as f32,
-        );
+        // セーブ関係
+        if !is_netplay_active() {
+            let player1 = &self.players[0];
+            self.score = f32::max(
+                self.score,
+                (WORLD_HEIGHT as f32 * CELL_SIZE as f32 - (player1.position.y)) as f32,
+            );
 
-        if inputs.is_button_just_pressed(wasm4::BUTTON_2) {
-            // self.debug = !self.debug;
-            let game_data: GameData = GameData {
-                version: GAME_DATA_VERSION,
-                x: self.player1.position.x,
-                y: self.player1.position.y,
-            };
-            save(&game_data);
-            let loaded: GameData = load();
-            wasm4::trace(int_to_string(loaded.x as u32));
-            wasm4::trace(int_to_string(loaded.y as u32));
+            if inputs.is_button_just_pressed(wasm4::BUTTON_2) {
+                // self.debug = !self.debug;
+                let game_data: GameData = GameData {
+                    version: GAME_DATA_VERSION,
+                    x: player1.position.x,
+                    y: player1.position.y,
+                };
+                save(&game_data);
+                let loaded: GameData = load();
+                wasm4::trace(int_to_string(loaded.x as u32));
+                wasm4::trace(int_to_string(loaded.y as u32));
+            }
         }
 
         // renders
 
-        let my_player = self.get_my_player();
+        // // Stingとの衝突判定
+        // for sting in player1.get_stings(&self.world) {
+        //     if sting.intersect(player1.get_aabb()) {
+        //         play_smash_se();
+        //         const STING_POWER: f32 = 1.0;
+        //         let vec = player1.position - sting.get_center();
+        //         player1.velocity.x = if 0.0 < vec.x { 1.0 } else { -1.0 } * 2.5;
+        //         if player1.is_grounded(&self.world) {
+        //             player1.velocity.y = -3.0;
+        //         }
+        //         self.vibration = 16
+        //     }
+        // }
+
+        self.render();
+
+        // bgm
+        set_bgm(Option::Some(LEVEL_BGM_SCORE));
+
+        // ゴール
+        for (i, player) in self.players.iter().enumerate() {
+            if player.position.distance(self.world.carrot) < CELL_SIZE as f32 {
+                return Option::Some(Scene::EndingScene(EndingScene::new()));
+            }
+        }
+        Option::None
+    }
+
+    fn render(&mut self) {
+        let my_player = self.players[get_my_net_player_index() as usize];
         let player_center = my_player.center();
         let dx = wasm4::SCREEN_SIZE as i32 / 2 - player_center.x.floor() as i32;
         let dy = wasm4::SCREEN_SIZE as i32 / 2 - player_center.y.floor() as i32
-            + i32::max(0, self.player_lookup);
+            + i32::max(0, my_player.player_lookup);
         let graphics = Graphics {
             frame_count: self.frame_count,
             debug: self.debug,
-            dx: dx + (self.vibration as f32 * f32::cos(self.frame_count as f32 * 0.5)) as i32,
+            dx: dx + (my_player.vibration as f32 * f32::cos(self.frame_count as f32 * 0.5)) as i32,
             dy,
         };
 
@@ -171,107 +168,35 @@ impl GameScene {
         set_draw_color(0x3210);
         self.world.draw(graphics);
 
-        self.player1.draw(graphics, &self.world, &player1_inputs);
-        self.player2.draw(graphics, &self.world, &player2_inputs);
+        for (i, player) in self.players.iter().enumerate() {
+            if player.active {
+                let gamepad = get_gamepad(i);
+                let inptus = Inputs::new(gamepad, self.prev_gamepads[i as usize]);
+                player.draw(graphics, &self.world, &inptus);
+            }
+        }
 
         // for fruit in self.fruits.iter() {
         //     fruit.draw(graphics, &self.world, &inputs);
         // }
 
-        // // Stingとの衝突判定
-        for sting in self.player1.get_stings(&self.world) {
-            if sting.intersect(self.player1.get_aabb()) {
-                play_smash_se();
-                const STING_POWER: f32 = 1.0;
-                let vec = self.player1.position - sting.get_center();
-                self.player1.velocity.x = if 0.0 < vec.x { 1.0 } else { -1.0 } * 2.5;
-                if self.player1.is_grounded(&self.world) {
-                    self.player1.velocity.y = -3.0;
-                }
-                self.vibration = 16
-            }
-        }
-
         // score
         set_draw_color(0x41);
         wasm4::text(int_to_string(self.score as u32 / CELL_SIZE), 0, 0);
 
-        if self.debug {
+        if self.debug && !is_netplay_active() {
+            let player1 = &self.players[0];
             set_draw_color(0x41);
             wasm4::text(
                 format!(
                     "{0: >04}, {1: >04}",
-                    self.player1.position.x.floor(),
-                    self.player1.position.y.floor()
+                    player1.position.x.floor(),
+                    player1.position.y.floor()
                 ),
                 0,
                 0,
             );
         }
-
-        // bgm
-        set_bgm(Option::Some(LEVEL_BGM_SCORE));
-
-        if self.player1.position.distance(self.world.carrot) < CELL_SIZE as f32 {
-            Option::Some(Scene::EndingScene(EndingScene::new()))
-        } else {
-            Option::None
-        }
-    }
-
-    fn update_player(&mut self, player_index: u8) -> Inputs {
-        let gamepad = unsafe {
-            match player_index {
-                0 => *wasm4::GAMEPAD1,
-                1 => *wasm4::GAMEPAD2,
-                2 => *wasm4::GAMEPAD3,
-                3 => *wasm4::GAMEPAD4,
-                _ => 0,
-            }
-        };
-        let prev_gamepad = match player_index {
-            0 => self.player1_prev_gamepad,
-            1 => self.player2_prev_gamepad,
-            2 => self.player3_prev_gamepad,
-            3 => self.player4_prev_gamepad,
-            _ => 0,
-        };
-
-        let self_player: &mut Body = match player_index {
-            0 => &mut self.player1,
-            1 => &mut self.player2,
-            _ => &mut self.player1,
-        };
-
-        let inputs = Inputs::new(gamepad, prev_gamepad);
-
-        // trace(format!("{}", gamepad));
-
-        self_player.input(&inputs, &self.world);
-
-        self_player.physical_update(inputs.horizontal_acceralation() as i32, &self.world);
-
-        if self_player.is_grounded(&self.world)
-            && f32::abs(self_player.velocity.x) < 1.0
-            && f32::abs(self_player.velocity.y) < 1.0
-            && inputs.is_button_pressed(wasm4::BUTTON_UP)
-        {
-            self.player_lookup = i32::min(MAX_PLAYER_LOOKUP, self.player_lookup + 2);
-        } else {
-            self.player_lookup = i32::max(MIN_PLAYER_LOOKUP, self.player_lookup - 4);
-        }
-
-        self.vibration = i32::max(0, self.vibration - 1);
-
-        match player_index {
-            0 => self.player1_prev_gamepad = gamepad,
-            1 => self.player2_prev_gamepad = gamepad,
-            2 => self.player3_prev_gamepad = gamepad,
-            3 => self.player4_prev_gamepad = gamepad,
-            _ => {}
-        }
-
-        inputs
     }
 }
 
@@ -287,4 +212,16 @@ fn int_to_string(v: u32) -> String {
         int_to_char(v % 10),
     ];
     str::from_utf8(buf).unwrap().to_string()
+}
+
+pub fn get_gamepad(player_index: usize) -> u8 {
+    unsafe {
+        match player_index {
+            0 => *wasm4::GAMEPAD1,
+            1 => *wasm4::GAMEPAD2,
+            2 => *wasm4::GAMEPAD3,
+            3 => *wasm4::GAMEPAD4,
+            _ => 0,
+        }
+    }
 }

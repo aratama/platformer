@@ -12,9 +12,7 @@ pub struct Game {
     prev_gamepad4: u8,
     scene: Scene,
 
-    player2_active: bool,
-    player3_active: bool,
-    player4_active: bool,
+    player_active: [bool; 4],
 }
 
 impl Game {
@@ -25,17 +23,23 @@ impl Game {
             prev_gamepad3: 0,
             prev_gamepad4: 0,
             scene: Scene::TitleScene(TitleScene::new()),
-            player2_active: false,
-            player3_active: false,
-            player4_active: false,
+            player_active: [true, false, false, false],
         }
     }
 
     pub fn update(&mut self) {
-        let gamepad = unsafe { *wasm4::GAMEPAD1 };
-        let inputs = Inputs::new(gamepad, self.prev_gamepad1);
+        let gamepad1 = unsafe { *wasm4::GAMEPAD1 };
+        let gamepad2 = unsafe { *wasm4::GAMEPAD2 };
+        let gamepad3 = unsafe { *wasm4::GAMEPAD3 };
+        let gamepad4 = unsafe { *wasm4::GAMEPAD4 };
+
+        self.player_active[1] |= 0 < gamepad2;
+        self.player_active[2] |= 0 < gamepad3;
+        self.player_active[3] |= 0 < gamepad4;
+
+        let inputs = Inputs::new(gamepad1, self.prev_gamepad1);
         let result = match { &mut self.scene } {
-            Scene::TitleScene(t) => t.update(&inputs),
+            Scene::TitleScene(t) => t.update(&inputs, &self.player_active),
             Scene::GameScene(g) => g.update(&inputs),
             Scene::EndingScene(e) => e.update(&inputs),
         };
