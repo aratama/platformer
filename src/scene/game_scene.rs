@@ -1,7 +1,5 @@
 use crate::body::{play_smash_se, Body};
-use crate::geometry::vector2::Vector2;
 use crate::graphics::Graphics;
-use crate::image::player::PLAYER_IMAGE;
 use crate::input::Inputs;
 use crate::music::level::LEVEL_BGM_SCORE;
 use crate::netplay::{get_my_net_player_index, is_netplay_active};
@@ -9,10 +7,9 @@ use crate::palette::set_draw_color;
 use crate::save::{load, save, GameData, GAME_DATA_VERSION};
 use crate::scene::Scene;
 use crate::sound::set_bgm;
-use crate::wasm4::trace;
+use crate::wasm4;
 use crate::world::{World, CELL_SIZE};
 use crate::world_map::WORLD_HEIGHT;
-use crate::{game, wasm4};
 use fastrand::Rng;
 use std::str;
 
@@ -79,7 +76,7 @@ impl GameScene {
     pub fn update(&mut self, inputs: &Inputs) -> Option<Scene> {
         self.frame_count += 1;
 
-        for (i, player) in self.players.iter_mut().enumerate() {
+        for player in self.players.iter_mut() {
             player.update(&self.world);
         }
 
@@ -112,18 +109,20 @@ impl GameScene {
         // renders
 
         // // Stingとの衝突判定
-        // for sting in player1.get_stings(&self.world) {
-        //     if sting.intersect(player1.get_aabb()) {
-        //         play_smash_se();
-        //         const STING_POWER: f32 = 1.0;
-        //         let vec = player1.position - sting.get_center();
-        //         player1.velocity.x = if 0.0 < vec.x { 1.0 } else { -1.0 } * 2.5;
-        //         if player1.is_grounded(&self.world) {
-        //             player1.velocity.y = -3.0;
-        //         }
-        //         self.vibration = 16
-        //     }
-        // }
+        for player in self.players.iter_mut() {
+            for sting in player.get_stings(&self.world) {
+                if sting.intersect(player.get_aabb()) {
+                    play_smash_se();
+                    const STING_POWER: f32 = 1.0;
+                    let vec = player.position - sting.get_center();
+                    player.velocity.x = if 0.0 < vec.x { 1.0 } else { -1.0 } * 2.5;
+                    if player.is_grounded(&self.world) {
+                        player.velocity.y = -3.0;
+                    }
+                    player.vibration = 16
+                }
+            }
+        }
 
         self.render();
 
@@ -131,7 +130,7 @@ impl GameScene {
         set_bgm(Option::Some(LEVEL_BGM_SCORE));
 
         // ゴール
-        for (i, player) in self.players.iter().enumerate() {
+        for player in self.players.iter() {
             if player.position.distance(self.world.carrot) < CELL_SIZE as f32 {
                 return Option::Some(Scene::EndingScene(EndingScene::new()));
             }
@@ -170,8 +169,7 @@ impl GameScene {
 
         for (i, player) in self.players.iter().enumerate() {
             if player.active {
-                let gamepad = get_gamepad(i);
-                let inptus = Inputs::new(gamepad, self.prev_gamepads[i as usize]);
+                let inptus = Inputs::new(i);
                 player.draw(graphics, &self.world, &inptus);
             }
         }
@@ -212,16 +210,4 @@ fn int_to_string(v: u32) -> String {
         int_to_char(v % 10),
     ];
     str::from_utf8(buf).unwrap().to_string()
-}
-
-pub fn get_gamepad(player_index: usize) -> u8 {
-    unsafe {
-        match player_index {
-            0 => *wasm4::GAMEPAD1,
-            1 => *wasm4::GAMEPAD2,
-            2 => *wasm4::GAMEPAD3,
-            3 => *wasm4::GAMEPAD4,
-            _ => 0,
-        }
-    }
 }

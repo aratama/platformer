@@ -11,7 +11,6 @@ use crate::image::player::PLAYER_IMAGE;
 use crate::image::slip::SLIP_IMAGE;
 use crate::image::Image;
 use crate::input::Inputs;
-use crate::scene::game_scene::get_gamepad;
 use crate::sound::{play, Sound};
 use crate::wasm4;
 use crate::world::{Block, World, CELL_SIZE};
@@ -59,8 +58,10 @@ const MAX_PLAYER_LOOKUP: i32 = 70;
 
 #[derive(Clone, Copy)]
 pub struct Body {
+    // [0,3] ゲームパッドの名前 1-4 とずれているので注意
     pub player_index: usize,
 
+    // オブジェクトの名前。使っていない
     pub name: &'static str,
 
     // 衝突判定AABBの左上
@@ -86,12 +87,16 @@ pub struct Body {
     // 現在掴まっているのと別の位置である場合のみ、新たに掴まり判定が有効になる
     pub climbing_point: Option<Vector2>,
 
+    // 0より大きい場合は操作できない。毎フレーム1づつ小さくなる
     pub wait: i32,
 
+    // 見上げる量。0を超えるとその分だけ上にスクロールする。プレイヤーキャラクターごとに必要
     pub player_lookup: i32,
-    pub vibration: i32,
-    prev_gamepad: u8,
 
+    // 視界の振動。プレイヤーキャラクターごとに必要
+    pub vibration: i32,
+
+    // このプレイヤーが参加しているかどうか
     pub active: bool,
 }
 
@@ -129,7 +134,6 @@ impl Body {
             wait: 0,
             player_lookup: MIN_PLAYER_LOOKUP,
             vibration: 0,
-            prev_gamepad: 0,
             active,
         }
     }
@@ -198,8 +202,7 @@ impl Body {
     }
 
     pub fn update(&mut self, world: &World) {
-        let gamepad = get_gamepad(self.player_index);
-        let inputs = Inputs::new(gamepad, self.prev_gamepad);
+        let inputs = Inputs::new(self.player_index);
 
         if inputs.is_any_button_just_pressed() {
             self.active = true;
@@ -222,8 +225,6 @@ impl Body {
         }
 
         self.vibration = i32::max(0, self.vibration - 1);
-
-        self.prev_gamepad = gamepad;
     }
 
     pub fn is_grounded(&self, world: &World) -> bool {
