@@ -23,6 +23,8 @@ static mut BGM_MUSIC_COUNT: u32 = 0;
 
 static mut CURRENT_BGM: Option<&'static Music> = Option::None;
 
+static mut MASTER_VOLUE: u32 = 0;
+
 pub fn set_bgm(bgm: Option<&'static Music>) {
     unsafe {
         let reset = match (CURRENT_BGM, bgm) {
@@ -69,7 +71,7 @@ pub fn music(music: &Music, music_count: &mut u32, pitch_offset: i32, loop_music
                     decay: 0,
                     sustain: music.unit * release / 2,
                     release: music.unit * release / 2 - 1, // -1でずらさないと直後の音と被ってノイズが生じる
-                    volume: (*track).volume,
+                    volume: (*track).volume * unsafe { MASTER_VOLUE } / 100,
                     channel: channel as u32,
                     mode: 0,
                 })

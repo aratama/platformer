@@ -8,6 +8,8 @@ use crate::image::jump::JUMP_IMAGE;
 use crate::image::lie::LIE_IMAGE;
 use crate::image::lookup::LOOKUP_IMAGE;
 use crate::image::player::PLAYER_IMAGE;
+use crate::image::player_ladder0::PLAYER_LADDER0_IMAGE;
+use crate::image::player_ladder1::PLAYER_LADDER1_IMAGE;
 use crate::image::slip::SLIP_IMAGE;
 use crate::image::Image;
 use crate::input::Inputs;
@@ -98,6 +100,10 @@ pub struct Body {
 
     // このプレイヤーが参加しているかどうか
     pub active: bool,
+
+    pub ladder: bool,
+
+    pub ladder_count: u32,
 }
 
 fn sign(v: i32) -> i32 {
@@ -135,6 +141,8 @@ impl Body {
             player_lookup: MIN_PLAYER_LOOKUP,
             vibration: 0,
             active,
+            ladder: false,
+            ladder_count: 0,
         }
     }
 
@@ -168,8 +176,10 @@ impl Body {
         let gravity: Vector2 = Vector2::new(GRAVITY_X, GRAVITY_Y);
 
         // 重力加速度を加算
-        self.velocity.y += gravity.y;
-        self.velocity.x += gravity.x;
+        if !self.ladder {
+            self.velocity.y += gravity.y;
+            self.velocity.x += gravity.x;
+        }
 
         // 空気抵抗
         self.velocity.x = self.velocity.x
@@ -201,6 +211,10 @@ impl Body {
         }
     }
 
+    /**
+     * ゲームパッド入力などを考慮してこのプレイヤーキャラクターを更新します
+     * このメソッドでは重力加速度などの反映は行いません
+     */
     pub fn update(&mut self, world: &World) {
         let inputs = Inputs::new(self.player_index);
 
@@ -208,20 +222,20 @@ impl Body {
             self.active = true;
         }
 
-        // trace(format!("{}", gamepad));
-
         self.input(&inputs, world);
 
         self.physical_update(inputs.horizontal_acceralation() as i32, world);
 
-        if self.is_grounded(world)
-            && f32::abs(self.velocity.x) < 1.0
-            && f32::abs(self.velocity.y) < 1.0
-            && inputs.is_button_pressed(wasm4::BUTTON_UP)
-        {
-            self.player_lookup = i32::min(MAX_PLAYER_LOOKUP, self.player_lookup + 2);
-        } else {
-            self.player_lookup = i32::max(MIN_PLAYER_LOOKUP, self.player_lookup - 4);
+        if !self.ladder {
+            if self.is_grounded(world)
+                && f32::abs(self.velocity.x) < 1.0
+                && f32::abs(self.velocity.y) < 1.0
+                && inputs.is_button_pressed(wasm4::BUTTON_UP)
+            {
+                self.player_lookup = i32::min(MAX_PLAYER_LOOKUP, self.player_lookup + 2);
+            } else {
+                self.player_lookup = i32::max(MIN_PLAYER_LOOKUP, self.player_lookup - 4);
+            }
         }
 
         self.vibration = i32::max(0, self.vibration - 1);
@@ -411,12 +425,20 @@ impl Body {
      * 入力にしたがってプレイヤーキャラクターとしての更新を行います
      */
     pub fn input(&mut self, input: &Inputs, world: &World) {
+        // 待機中はどんな操作もできない
         if self.wait == 0 {
             let grounded = self.is_grounded(&world);
 
             let speed_scale = if grounded { 1.0 } else { AIRIAL_CONTROL };
 
-            if self.climbing != 0 {
+            // はしご掴まり中の操作
+            if self.ladder {
+                if input.is_button_pressed(wasm4::BUTTON_DOWN) {
+                    self.ladder = false;
+                }
+            }
+            // 崖よじ登り中の操作
+            else if self.climbing != 0 {
                 let acc = input.horizontal_acceralation() as i32;
 
                 // 壁の方向に20フレーム押し続けるとよじ登る
@@ -460,7 +482,9 @@ impl Body {
                         Direction::from_delta(input.horizontal_acceralation(), self.direction);
                     play_jump_se()
                 }
-            } else if self.is_right_slide(input, world) {
+            }
+            // 右ずり落ち中の操作
+            else if self.is_right_slide(input, world) {
                 // 右ずり落ち
                 if input.is_button_just_pressed(wasm4::BUTTON_1) {
                     self.velocity.y = -JUMP_ACCELERATION;
@@ -468,7 +492,9 @@ impl Body {
                     self.direction = Direction::Left;
                     play_jump_se()
                 }
-            } else if self.is_left_slide(input, world) {
+            }
+            // 左ずり落ち中の操作
+            else if self.is_left_slide(input, world) {
                 // 左ずり落ち
                 if input.is_button_just_pressed(wasm4::BUTTON_1) {
                     self.velocity.y = -JUMP_ACCELERATION;
@@ -476,7 +502,9 @@ impl Body {
                     self.direction = Direction::Right;
                     play_jump_se()
                 }
-            } else {
+            }
+            // 通常の移動操作
+            else {
                 // 左右移動
                 if !input.is_button_pressed(wasm4::BUTTON_DOWN) {
                     if input.is_button_pressed(wasm4::BUTTON_LEFT) {
@@ -493,8 +521,22 @@ impl Body {
                     self.walk(speed_scale * input.horizontal_acceralation());
                 }
 
+                // はしごと重なっている場合ははしご掴まり状態へ
+
+                if input.is_button_pressed(wasm4::BUTTON_UP) {
+                    match self.get_touching_ladder(world) {
+                        Some((x, y)) => {
+                            self.ladder = true;
+                            self.velocity.x = 0.0;
+                            self.velocity.y = 0.0;
+                            self.position.x = CELL_SIZE as f32 * x as f32;
+                            // self.position.y = CELL_SIZE as f32 * y as f32;
+                        }
+                        None => {}
+                    }
+                }
                 // ジャンプ
-                if input.is_button_just_pressed(wasm4::BUTTON_1) {
+                else if input.is_button_just_pressed(wasm4::BUTTON_1) {
                     self.jump(world);
                 }
 
@@ -544,6 +586,20 @@ impl Body {
         // wasm4::trace(format!("x {}", self.position.x));
 
         self.wait = i32::max(0, self.wait - 1);
+
+        if input.is_button_pressed(wasm4::BUTTON_UP) {
+            self.ladder_count += 1;
+        }
+    }
+
+    fn get_touching_ladder(&self, world: &World) -> Option<(i32, i32)> {
+        let i = self.get_current_cell();
+        let cell = world.get_cell(i.0, i.1);
+        if cell == Block::Ladder {
+            Some(i)
+        } else {
+            None
+        }
     }
 
     fn get_current_cell(&self) -> (i32, i32) {
@@ -564,7 +620,13 @@ impl Body {
 
         let grounded = self.is_grounded(world);
 
-        let i: &Image = if !grounded {
+        let i: &Image = if self.ladder {
+            if (self.ladder_count / 8) % 2 == 0 {
+                &PLAYER_LADDER0_IMAGE
+            } else {
+                &PLAYER_LADDER1_IMAGE
+            }
+        } else if !grounded {
             &JUMP_IMAGE
         } else if inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
             &LIE_IMAGE

@@ -7,6 +7,8 @@ pub mod ladder;
 pub mod lie;
 pub mod lookup;
 pub mod player;
+pub mod player_ladder0;
+pub mod player_ladder1;
 pub mod slip;
 pub mod sting;
 pub mod tile;
