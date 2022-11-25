@@ -63,26 +63,22 @@ pub struct Body {
     // [0,3] ゲームパッドの名前 1-4 とずれているので注意
     pub player_index: usize,
 
+    // このプレイヤーが参加しているかどうか
+    pub active: bool,
+
     // オブジェクトの名前。使っていない
     pub name: &'static str,
 
     // 衝突判定AABBの左上
     pub position: Vector2,
 
-    pub velocity: Vector2,
-
-    pub image: &'static Image,
-
-    pub direction: Direction,
-
     // 衝突判定のAABBのサイズ
     pub body_width: f32,
     pub body_height: f32,
 
-    // よじ登ろうとしている位置(ブロック位置ではなく)
-    // 現在掴まっている位置を除外して判定しないと、よじ登り中にジャンプしようとしたときに、直後に同じ箇所に掴まってしまう
-    // 現在掴まっているのと別の位置である場合のみ、新たに掴まり判定が有効になる
-    pub climbing_point: Option<Vector2>,
+    pub velocity: Vector2,
+
+    pub direction: Direction,
 
     // 見上げる量。0を超えるとその分だけ上にスクロールする。プレイヤーキャラクターごとに必要
     pub player_lookup: i32,
@@ -90,10 +86,17 @@ pub struct Body {
     // 視界の振動。プレイヤーキャラクターごとに必要
     pub vibration: i32,
 
-    // このプレイヤーが参加しているかどうか
-    pub active: bool,
-
     pub stance: Stance,
+}
+
+#[derive(Clone, Copy)]
+pub struct CliffHangging {
+    hangging: i32,
+
+    // よじ登ろうとしている位置(ブロック位置ではなく)
+    // 現在掴まっている位置を除外して判定しないと、よじ登り中にジャンプしようとしたときに、直後に同じ箇所に掴まってしまう
+    // 現在掴まっているのと別の位置である場合のみ、新たに掴まり判定が有効になる
+    point: Vector2,
 }
 
 #[derive(Clone, Copy)]
@@ -110,7 +113,7 @@ pub enum Stance {
     // よじ登り中かどうか
     // 0はよじ登りをしていない
     // -1は左向きへよじ登り中、1は右向きへよじ登り中
-    CliffHangging(i32),
+    CliffHangging(CliffHangging),
 }
 
 impl Body {
@@ -119,7 +122,6 @@ impl Body {
         active: bool,
         name: &'static str,
         position: Vector2,
-        image: &'static Image,
         body_width: f32,
         body_height: f32,
     ) -> Self {
@@ -128,11 +130,9 @@ impl Body {
             name,
             position,
             velocity: Vector2::default(),
-            image,
             direction: Direction::Right,
             body_width,
             body_height,
-            climbing_point: None,
             player_lookup: MIN_PLAYER_LOOKUP,
             vibration: 0,
             active,
@@ -152,7 +152,6 @@ impl Body {
             active,
             name,
             Vector2::new(player_x, player_y),
-            &PLAYER_IMAGE,
             6.0,
             12.0,
         )
@@ -204,7 +203,7 @@ impl Body {
 
                 // 物体を移動
                 match self.stance {
-                    Stance::CliffHangging(pos) if pos == 0 => {
+                    Stance::CliffHangging(stance) if stance.hangging == 0 => {
                         self.move_body(0.0, 0.0, world);
                     }
                     _ => {
@@ -453,37 +452,42 @@ impl Body {
                     self.stance = Stance::OnLadder(animation + 1);
                 }
             }
-            Stance::CliffHangging(climbing) => {
+            Stance::CliffHangging(stance) => {
                 let acc = input.horizontal_acceralation() as i32;
 
                 // 壁の方向に20フレーム押し続けるとよじ登る
-                if i32::signum(climbing) == acc {
+                if i32::signum(stance.hangging) == acc {
                     let next_climbing = 2 * (input.horizontal_acceralation() as i32);
-                    if 20 < i32::abs(climbing) {
+                    if 20 < i32::abs(stance.hangging) {
                         self.position.x +=
-                            self.body_width as f32 * 0.5 * i32::signum(climbing) as f32;
+                            self.body_width as f32 * 0.5 * i32::signum(stance.hangging) as f32;
                         self.position.y -= self.body_height as f32 * 0.5;
-                        self.climbing_point = None;
                         self.stance = Stance::Wait(20);
                     } else {
-                        self.stance = Stance::CliffHangging(next_climbing);
+                        self.stance = Stance::CliffHangging(CliffHangging {
+                            hangging: next_climbing,
+                            point: stance.point,
+                        });
                     }
                 }
 
                 // 移動ボタンを話したらリセットされるようにself.climbingを減らす
-                if 0 < climbing {
-                    self.stance =
-                        Stance::CliffHangging(i32::max(1, climbing - i32::signum(climbing)));
-                } else if climbing < 0 {
-                    self.stance =
-                        Stance::CliffHangging(i32::min(-1, climbing - i32::signum(climbing)));
+                if 0 < stance.hangging {
+                    self.stance = Stance::CliffHangging(CliffHangging {
+                        hangging: i32::max(1, stance.hangging - i32::signum(stance.hangging)),
+                        point: stance.point,
+                    });
+                } else if stance.hangging < 0 {
+                    self.stance = Stance::CliffHangging(CliffHangging {
+                        hangging: i32::min(-1, stance.hangging - i32::signum(stance.hangging)),
+                        point: stance.point,
+                    });
                 }
 
                 if input.is_button_just_pressed(wasm4::BUTTON_DOWN) {
                     // 手を放す
                     // self.position.x -= sign(self.climbing) as f32 * CELL_SIZE as f32;
                     self.stance = Stance::Wait(15);
-                    self.climbing_point = None;
                     self.velocity.x = 0.0;
                     self.velocity.y = 0.0;
                 }
@@ -581,14 +585,12 @@ impl Body {
                         && 0.0 < self.velocity.y // 落下中のみ。この判定をしないと、小さな山を、壁をこすりながらジャンプしたときに掴みが発動してしまう  
                         && input.direction() != None
                         && cells_ok
-                        && (match self.climbing_point {
-                            None => true,
-                            Some(_) => true,
-                        })
                 {
-                    self.stance = Stance::CliffHangging(input.horizontal_acceralation() as i32);
-                    self.climbing_point =
-                        Some(Vector2::new(current_cell_cx as f32, current_cell_cy as f32));
+                    self.stance = Stance::CliffHangging(CliffHangging {
+                        hangging: input.horizontal_acceralation() as i32,
+                        point: Vector2::new(current_cell_cx as f32, current_cell_cy as f32),
+                    });
+
                     self.position.x = (next_cell_cx * CELL_SIZE as i32) as f32
                         + if self.direction == Direction::Right {
                             -self.body_width
