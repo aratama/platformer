@@ -29,6 +29,7 @@ mod netplay;
 mod palette;
 mod save;
 mod scene;
+mod se;
 mod sound;
 mod wasm4;
 mod world;

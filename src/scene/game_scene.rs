@@ -1,4 +1,4 @@
-use crate::body::{play_smash_se, Body};
+use crate::body::Body;
 use crate::graphics::Graphics;
 use crate::input::Inputs;
 use crate::music::level::LEVEL_BGM_SCORE;
@@ -6,6 +6,7 @@ use crate::netplay::{get_my_net_player_index, is_netplay_active};
 use crate::palette::set_draw_color;
 use crate::save::{load, save, GameData, GAME_DATA_VERSION};
 use crate::scene::Scene;
+use crate::se::play_smash_se;
 use crate::sound::set_bgm;
 use crate::wasm4;
 use crate::world::{World, CELL_SIZE};

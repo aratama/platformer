@@ -13,7 +13,7 @@ use crate::image::player_ladder1::PLAYER_LADDER1_IMAGE;
 use crate::image::slip::SLIP_IMAGE;
 use crate::image::Image;
 use crate::input::Inputs;
-use crate::sound::{play, Sound};
+use crate::se::play_jump_se;
 use crate::wasm4;
 use crate::world::{Block, World, CELL_SIZE};
 
@@ -79,18 +79,10 @@ pub struct Body {
     pub body_width: f32,
     pub body_height: f32,
 
-    // よじ登り中かどうか
-    // 0はよじ登りをしていない
-    // -1は左向きへよじ登り中、1は右向きへよじ登り中
-    pub climbing: i32,
-
     // よじ登ろうとしている位置(ブロック位置ではなく)
     // 現在掴まっている位置を除外して判定しないと、よじ登り中にジャンプしようとしたときに、直後に同じ箇所に掴まってしまう
     // 現在掴まっているのと別の位置である場合のみ、新たに掴まり判定が有効になる
     pub climbing_point: Option<Vector2>,
-
-    // 0より大きい場合は操作できない。毎フレーム1づつ小さくなる
-    pub wait: i32,
 
     // 見上げる量。0を超えるとその分だけ上にスクロールする。プレイヤーキャラクターごとに必要
     pub player_lookup: i32,
@@ -101,19 +93,24 @@ pub struct Body {
     // このプレイヤーが参加しているかどうか
     pub active: bool,
 
-    pub ladder: bool,
-
-    pub ladder_count: u32,
+    pub stance: Stance,
 }
 
-fn sign(v: i32) -> i32 {
-    if 0 < v {
-        1
-    } else if v < 0 {
-        -1
-    } else {
-        0
-    }
+#[derive(Clone, Copy)]
+pub enum Stance {
+    // 通常
+    Neutral,
+
+    // 0より大きい場合は操作できない。毎フレーム1づつ小さくなる
+    Wait(u32),
+
+    // カウントはアニメーション用
+    OnLadder(u32),
+
+    // よじ登り中かどうか
+    // 0はよじ登りをしていない
+    // -1は左向きへよじ登り中、1は右向きへよじ登り中
+    CliffHangging(i32),
 }
 
 impl Body {
@@ -135,14 +132,11 @@ impl Body {
             direction: Direction::Right,
             body_width,
             body_height,
-            climbing: 0,
             climbing_point: None,
-            wait: 0,
             player_lookup: MIN_PLAYER_LOOKUP,
             vibration: 0,
             active,
-            ladder: false,
-            ladder_count: 0,
+            stance: Stance::Neutral,
         }
     }
 
@@ -157,7 +151,6 @@ impl Body {
             player_index,
             active,
             name,
-            // Vector2::new(CELL_SIZE as f32 * 13.0, CELL_SIZE as f32 * 235.0),
             Vector2::new(player_x, player_y),
             &PLAYER_IMAGE,
             6.0,
@@ -172,42 +165,53 @@ impl Body {
      * プレイヤーの状態によってはこの関数を呼ばないこともあります
      */
     pub fn physical_update(&mut self, cling: i32, world: &World) {
-        let grounded = self.is_grounded(world);
-        let gravity: Vector2 = Vector2::new(GRAVITY_X, GRAVITY_Y);
+        match self.stance {
+            Stance::OnLadder(_) => {}
+            Stance::CliffHangging(_) => {}
+            _ => {
+                let grounded = self.is_grounded(world);
+                let gravity: Vector2 = Vector2::new(GRAVITY_X, GRAVITY_Y);
 
-        // 重力加速度を加算
-        if !self.ladder {
-            self.velocity.y += gravity.y;
-            self.velocity.x += gravity.x;
-        }
+                // 重力加速度を加算
+                self.velocity.y += gravity.y;
+                self.velocity.x += gravity.x;
 
-        // 空気抵抗
-        self.velocity.x = self.velocity.x
-            * if grounded {
-                GROUND_RESISTANCE_X
-            } else {
-                AIR_RESISTANCE_X
-            };
+                // 空気抵抗
+                self.velocity.x = self.velocity.x
+                    * if grounded {
+                        GROUND_RESISTANCE_X
+                    } else {
+                        AIR_RESISTANCE_X
+                    };
 
-        // 壁ずりおちの場合は空気抵抗が増えているように処理する
-        if 0.0 < self.velocity.y && 0 < cling && self.is_touching_right(CLING_MERGIN, world) {
-            self.velocity.y = self.velocity.y * 0.5;
-            self.direction = Direction::Right;
-        } else if 0.0 < self.velocity.y && cling < 0 && self.is_touching_left(CLING_MERGIN, world) {
-            self.velocity.y = self.velocity.y * 0.5;
-            self.direction = Direction::Left;
-        } else {
-            self.velocity.y = self.velocity.y * AIR_RESISTANCE_Y
-        };
+                // 壁ずりおちの場合は空気抵抗が増えているように処理する
+                if 0.0 < self.velocity.y && 0 < cling && self.is_touching_right(CLING_MERGIN, world)
+                {
+                    self.velocity.y = self.velocity.y * 0.5;
+                    self.direction = Direction::Right;
+                } else if 0.0 < self.velocity.y
+                    && cling < 0
+                    && self.is_touching_left(CLING_MERGIN, world)
+                {
+                    self.velocity.y = self.velocity.y * 0.5;
+                    self.direction = Direction::Left;
+                } else {
+                    self.velocity.y = self.velocity.y * AIR_RESISTANCE_Y
+                };
 
-        // 最大速度制限
-        self.velocity.x = f32::max(-MAX_SPEED_X, f32::min(MAX_SPEED_X, self.velocity.x));
+                // 最大速度制限
+                self.velocity.x = f32::max(-MAX_SPEED_X, f32::min(MAX_SPEED_X, self.velocity.x));
 
-        // 物体を移動
-        if self.climbing == 0 {
-            self.move_body(self.velocity.x, self.velocity.y, world);
-        } else {
-            self.move_body(0.0, 0.0, world);
+                // 物体を移動
+                match self.stance {
+                    Stance::CliffHangging(pos) if pos == 0 => {
+                        self.move_body(0.0, 0.0, world);
+                    }
+                    _ => {
+                        self.move_body(self.velocity.x, self.velocity.y, world);
+                    }
+                }
+            }
         }
     }
 
@@ -226,15 +230,18 @@ impl Body {
 
         self.physical_update(inputs.horizontal_acceralation() as i32, world);
 
-        if !self.ladder {
-            if self.is_grounded(world)
-                && f32::abs(self.velocity.x) < 1.0
-                && f32::abs(self.velocity.y) < 1.0
-                && inputs.is_button_pressed(wasm4::BUTTON_UP)
-            {
-                self.player_lookup = i32::min(MAX_PLAYER_LOOKUP, self.player_lookup + 2);
-            } else {
-                self.player_lookup = i32::max(MIN_PLAYER_LOOKUP, self.player_lookup - 4);
+        match self.stance {
+            Stance::OnLadder(_) => {}
+            _ => {
+                if self.is_grounded(world)
+                    && f32::abs(self.velocity.x) < 1.0
+                    && f32::abs(self.velocity.y) < 1.0
+                    && inputs.is_button_pressed(wasm4::BUTTON_UP)
+                {
+                    self.player_lookup = i32::min(MAX_PLAYER_LOOKUP, self.player_lookup + 2);
+                } else {
+                    self.player_lookup = i32::max(MIN_PLAYER_LOOKUP, self.player_lookup - 4);
+                }
             }
         }
 
@@ -425,171 +432,179 @@ impl Body {
      * 入力にしたがってプレイヤーキャラクターとしての更新を行います
      */
     pub fn input(&mut self, input: &Inputs, world: &World) {
-        // 待機中はどんな操作もできない
-        if self.wait == 0 {
-            let grounded = self.is_grounded(&world);
+        let grounded = self.is_grounded(&world);
 
-            let speed_scale = if grounded { 1.0 } else { AIRIAL_CONTROL };
+        let speed_scale = if grounded { 1.0 } else { AIRIAL_CONTROL };
 
-            // はしご掴まり中の操作
-            if self.ladder {
+        match self.stance {
+            Stance::Wait(0) => {
+                self.stance = Stance::Neutral;
+            }
+
+            Stance::Wait(wait) => {
+                // 待機中はどんな操作もできない
+                self.stance = Stance::Wait(u32::max(0, wait - 1));
+            }
+            Stance::OnLadder(animation) => {
+                // はしご掴まり中の操作
                 if input.is_button_pressed(wasm4::BUTTON_DOWN) {
-                    self.ladder = false;
+                    self.stance = Stance::Neutral;
+                } else if input.is_button_pressed(wasm4::BUTTON_UP) {
+                    self.stance = Stance::OnLadder(animation + 1);
                 }
             }
-            // 崖よじ登り中の操作
-            else if self.climbing != 0 {
+            Stance::CliffHangging(climbing) => {
                 let acc = input.horizontal_acceralation() as i32;
 
                 // 壁の方向に20フレーム押し続けるとよじ登る
-                if sign(self.climbing) == acc {
-                    self.climbing += 2 * (input.horizontal_acceralation() as i32);
-                    if 20 < i32::abs(self.climbing) {
+                if i32::signum(climbing) == acc {
+                    let next_climbing = 2 * (input.horizontal_acceralation() as i32);
+                    if 20 < i32::abs(climbing) {
                         self.position.x +=
-                            self.body_width as f32 * 0.5 * sign(self.climbing) as f32;
+                            self.body_width as f32 * 0.5 * i32::signum(climbing) as f32;
                         self.position.y -= self.body_height as f32 * 0.5;
-                        self.climbing = 0;
                         self.climbing_point = None;
-                        self.wait = 20;
+                        self.stance = Stance::Wait(20);
+                    } else {
+                        self.stance = Stance::CliffHangging(next_climbing);
                     }
                 }
 
                 // 移動ボタンを話したらリセットされるようにself.climbingを減らす
-                if self.climbing != 0 {
-                    if 0 < self.climbing {
-                        self.climbing = i32::max(1, self.climbing - sign(self.climbing));
-                    } else {
-                        self.climbing = i32::min(-1, self.climbing - sign(self.climbing));
-                    }
+                if 0 < climbing {
+                    self.stance =
+                        Stance::CliffHangging(i32::max(1, climbing - i32::signum(climbing)));
+                } else if climbing < 0 {
+                    self.stance =
+                        Stance::CliffHangging(i32::min(-1, climbing - i32::signum(climbing)));
                 }
 
                 if input.is_button_just_pressed(wasm4::BUTTON_DOWN) {
                     // 手を放す
                     // self.position.x -= sign(self.climbing) as f32 * CELL_SIZE as f32;
-                    self.climbing = 0;
+                    self.stance = Stance::Wait(15);
                     self.climbing_point = None;
                     self.velocity.x = 0.0;
                     self.velocity.y = 0.0;
-                    self.wait = 15;
                 }
 
                 // 掴まり中のジャンプは、キー入力方向に跳ねることができる
                 if input.is_button_just_pressed(wasm4::BUTTON_1) {
                     self.velocity.y = -JUMP_ACCELERATION;
                     self.velocity.x = 1.0 * input.horizontal_acceralation();
-                    self.climbing = 0;
+                    self.stance = Stance::Neutral;
                     self.direction =
                         Direction::from_delta(input.horizontal_acceralation(), self.direction);
                     play_jump_se()
                 }
             }
-            // 右ずり落ち中の操作
-            else if self.is_right_slide(input, world) {
-                // 右ずり落ち
-                if input.is_button_just_pressed(wasm4::BUTTON_1) {
-                    self.velocity.y = -JUMP_ACCELERATION;
-                    self.velocity.x = -1.0;
-                    self.direction = Direction::Left;
-                    play_jump_se()
-                }
-            }
-            // 左ずり落ち中の操作
-            else if self.is_left_slide(input, world) {
-                // 左ずり落ち
-                if input.is_button_just_pressed(wasm4::BUTTON_1) {
-                    self.velocity.y = -JUMP_ACCELERATION;
-                    self.velocity.x = 1.0;
-                    self.direction = Direction::Right;
-                    play_jump_se()
-                }
-            }
-            // 通常の移動操作
-            else {
-                // 左右移動
-                if !input.is_button_pressed(wasm4::BUTTON_DOWN) {
-                    if input.is_button_pressed(wasm4::BUTTON_LEFT) {
-                        if grounded {
-                            self.direction = Direction::Left;
-                        }
-                    }
-                    if input.is_button_pressed(wasm4::BUTTON_RIGHT) {
-                        if grounded {
-                            self.direction = Direction::Right;
-                        }
-                    }
-
-                    self.walk(speed_scale * input.horizontal_acceralation());
-                }
-
-                // はしごと重なっている場合ははしご掴まり状態へ
-
-                if input.is_button_pressed(wasm4::BUTTON_UP) {
-                    match self.get_touching_ladder(world) {
-                        Some((x, y)) => {
-                            self.ladder = true;
-                            self.velocity.x = 0.0;
-                            self.velocity.y = 0.0;
-                            self.position.x = CELL_SIZE as f32 * x as f32;
-                            // self.position.y = CELL_SIZE as f32 * y as f32;
-                        }
-                        None => {}
+            Stance::Neutral => {
+                // 右ずり落ち中の操作
+                if self.is_right_slide(input, world) {
+                    // 右ずり落ち
+                    if input.is_button_just_pressed(wasm4::BUTTON_1) {
+                        self.velocity.y = -JUMP_ACCELERATION;
+                        self.velocity.x = -1.0;
+                        self.direction = Direction::Left;
+                        play_jump_se()
                     }
                 }
-                // ジャンプ
-                else if input.is_button_just_pressed(wasm4::BUTTON_1) {
-                    self.jump(world);
+                // 左ずり落ち中の操作
+                else if self.is_left_slide(input, world) {
+                    // 左ずり落ち
+                    if input.is_button_just_pressed(wasm4::BUTTON_1) {
+                        self.velocity.y = -JUMP_ACCELERATION;
+                        self.velocity.x = 1.0;
+                        self.direction = Direction::Right;
+                        play_jump_se()
+                    }
+                }
+                // 通常の移動操作
+                else {
+                    // 左右移動
+                    if !input.is_button_pressed(wasm4::BUTTON_DOWN) {
+                        if input.is_button_pressed(wasm4::BUTTON_LEFT) {
+                            if grounded {
+                                self.direction = Direction::Left;
+                            }
+                        }
+                        if input.is_button_pressed(wasm4::BUTTON_RIGHT) {
+                            if grounded {
+                                self.direction = Direction::Right;
+                            }
+                        }
+
+                        self.walk(speed_scale * input.horizontal_acceralation());
+                    }
+
+                    // はしごと重なっている場合ははしご掴まり状態へ
+
+                    if input.is_button_pressed(wasm4::BUTTON_UP) {
+                        match self.get_touching_ladder(world) {
+                            Some((x, y)) => {
+                                self.stance = Stance::OnLadder(0);
+                                self.velocity.x = 0.0;
+                                self.velocity.y = 0.0;
+                                self.position.x = CELL_SIZE as f32 * x as f32;
+                                // self.position.y = CELL_SIZE as f32 * y as f32;
+                            }
+                            None => {}
+                        }
+                    }
+                    // ジャンプ
+                    else if input.is_button_just_pressed(wasm4::BUTTON_1) {
+                        self.jump(world);
+                    }
+
+                    // 空中で上昇中にジャンプボタンを離した場合は急速に加速度を失うことでジャンプ高さを調節できる
+                    if !grounded
+                        && !input.is_button_pressed(wasm4::BUTTON_1)
+                        && self.velocity.y < 0.0
+                    {
+                        self.velocity.y *= 0.1;
+                    }
                 }
 
-                // 空中で上昇中にジャンプボタンを離した場合は急速に加速度を失うことでジャンプ高さを調節できる
-                if !grounded && !input.is_button_pressed(wasm4::BUTTON_1) && self.velocity.y < 0.0 {
-                    self.velocity.y *= 0.1;
+                // よじ登り判定
+                let (current_cell_cx, current_cell_cy) = self.get_current_cell(); // 現在のブロック位置
+                let next_cell_cx = current_cell_cx + self.direction.delta(); // よじ登る対象のブロック位置
+                let next_cell_cy = current_cell_cy;
+
+                let current_cell = world.is_empty(current_cell_cx, current_cell_cy); // プレイヤーがいるブロック
+                let next_cell = world.is_climbable(next_cell_cx, current_cell_cy); // よじ登る対象のブロック。これが空の場合はよじ登れない
+                let up_next_cell = world.is_empty(next_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの上のブロック。これが空ならよじ登れない
+                let up_cell = world.is_empty(current_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの手前上のブロック。これが空ならよじ登れる
+                let down_cell = world.is_empty(current_cell_cx, current_cell_cy + 1); // 現在位置の下のブロック。これが空ならよじ登れる。この判定をしないと、落ちるおそれのない階段状の地形でも毎回掴みが発生してしまう
+                let cells_ok = current_cell && next_cell && up_next_cell && up_cell && down_cell; //判定対象の4つのブロックの状態が有効かどうか
+
+                if !grounded
+                        && 0.0 < self.velocity.y // 落下中のみ。この判定をしないと、小さな山を、壁をこすりながらジャンプしたときに掴みが発動してしまう  
+                        && input.direction() != None
+                        && cells_ok
+                        && (match self.climbing_point {
+                            None => true,
+                            Some(_) => true,
+                        })
+                {
+                    self.stance = Stance::CliffHangging(input.horizontal_acceralation() as i32);
+                    self.climbing_point =
+                        Some(Vector2::new(current_cell_cx as f32, current_cell_cy as f32));
+                    self.position.x = (next_cell_cx * CELL_SIZE as i32) as f32
+                        + if self.direction == Direction::Right {
+                            -self.body_width
+                        } else {
+                            (CELL_SIZE as i32) as f32
+                        };
+                    self.position.y =
+                        (next_cell_cy * CELL_SIZE as i32) as f32 - self.body_height * 0.5;
+
+                    self.velocity.x = 0.0;
+                    self.velocity.y = 0.0;
                 }
-            }
-
-            // よじ登り判定
-            let (current_cell_cx, current_cell_cy) = self.get_current_cell(); // 現在のブロック位置
-            let next_cell_cx = current_cell_cx + self.direction.delta(); // よじ登る対象のブロック位置
-            let next_cell_cy = current_cell_cy;
-
-            let current_cell = world.is_empty(current_cell_cx, current_cell_cy); // プレイヤーがいるブロック
-            let next_cell = world.is_climbable(next_cell_cx, current_cell_cy); // よじ登る対象のブロック。これが空の場合はよじ登れない
-            let up_next_cell = world.is_empty(next_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの上のブロック。これが空ならよじ登れない
-            let up_cell = world.is_empty(current_cell_cx, current_cell_cy - 1); // よじ登る対象ブロックの手前上のブロック。これが空ならよじ登れる
-            let down_cell = world.is_empty(current_cell_cx, current_cell_cy + 1); // 現在位置の下のブロック。これが空ならよじ登れる。この判定をしないと、落ちるおそれのない階段状の地形でも毎回掴みが発生してしまう
-            let cells_ok = current_cell && next_cell && up_next_cell && up_cell && down_cell; //判定対象の4つのブロックの状態が有効かどうか
-
-            if !grounded
-                && 0.0 < self.velocity.y // 落下中のみ。この判定をしないと、小さな山を、壁をこすりながらジャンプしたときに掴みが発動してしまう  
-                && input.direction() != None
-                && cells_ok
-                && (match self.climbing_point {
-                    None => true,
-                    Some(_) => true,
-                })
-            {
-                self.climbing = input.horizontal_acceralation() as i32;
-                self.climbing_point =
-                    Some(Vector2::new(current_cell_cx as f32, current_cell_cy as f32));
-                self.position.x = (next_cell_cx * CELL_SIZE as i32) as f32
-                    + if self.direction == Direction::Right {
-                        -self.body_width
-                    } else {
-                        (CELL_SIZE as i32) as f32
-                    };
-                self.position.y = (next_cell_cy * CELL_SIZE as i32) as f32 - self.body_height * 0.5;
-
-                self.velocity.x = 0.0;
-                self.velocity.y = 0.0;
             }
         }
 
         // wasm4::trace(format!("x {}", self.position.x));
-
-        self.wait = i32::max(0, self.wait - 1);
-
-        if input.is_button_pressed(wasm4::BUTTON_UP) {
-            self.ladder_count += 1;
-        }
     }
 
     fn get_touching_ladder(&self, world: &World) -> Option<(i32, i32)> {
@@ -620,45 +635,56 @@ impl Body {
 
         let grounded = self.is_grounded(world);
 
-        let i: &Image = if self.ladder {
-            if (self.ladder_count / 8) % 2 == 0 {
-                &PLAYER_LADDER0_IMAGE
-            } else {
-                &PLAYER_LADDER1_IMAGE
+        let i: &Image = match self.stance {
+            Stance::OnLadder(animation) => {
+                if (animation / 8) % 2 == 0 {
+                    &PLAYER_LADDER0_IMAGE
+                } else {
+                    &PLAYER_LADDER1_IMAGE
+                }
             }
-        } else if !grounded {
-            &JUMP_IMAGE
-        } else if inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
-            &LIE_IMAGE
-        } else if inputs.is_button_pressed(wasm4::BUTTON_UP) {
-            &LOOKUP_IMAGE
-        } else {
-            &PLAYER_IMAGE
+            _ => {
+                if !grounded {
+                    &JUMP_IMAGE
+                } else if inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
+                    &LIE_IMAGE
+                } else if inputs.is_button_pressed(wasm4::BUTTON_UP) {
+                    &LOOKUP_IMAGE
+                } else {
+                    &PLAYER_IMAGE
+                }
+            }
         };
 
         let x = (self.body_width * 0.5 - i.width as f32 * 0.5 + self.position.x.floor()) as i32;
         let y = (self.body_height - i.height as f32 + self.position.y.floor()) as i32;
 
         g.set_draw_color(0x4320);
-        if self.climbing != 0 {
-            let x = (self.position.x).floor() as i32;
-            let y = (self.body_height - CLIMB_IMAGE.height as f32 + self.position.y.floor()) as i32;
-            if self.direction == Direction::Right {
-                // TODO: refactor
-                g.draw(&CLIMB_IMAGE, x - 2, y + 2, flags);
-            } else {
-                g.draw(&CLIMB_IMAGE, x - 8, y + 2, flags);
+        match self.stance {
+            Stance::CliffHangging(_) => {
+                let x = (self.position.x).floor() as i32;
+                let y =
+                    (self.body_height - CLIMB_IMAGE.height as f32 + self.position.y.floor()) as i32;
+                if self.direction == Direction::Right {
+                    // TODO: refactor
+                    g.draw(&CLIMB_IMAGE, x - 2, y + 2, flags);
+                } else {
+                    g.draw(&CLIMB_IMAGE, x - 8, y + 2, flags);
+                }
             }
-        } else if self.is_right_slide(inputs, world) {
-            g.draw(&SLIP_IMAGE, x, y, flags);
-        } else if self.is_left_slide(inputs, world) {
-            g.draw(&SLIP_IMAGE, x, y, flags);
-        } else if grounded && inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
-            g.draw(&LIE_IMAGE, x, y, flags);
-        } else if grounded && 0.1 < f32::abs(self.velocity.x) {
-            g.animate(&WALK_ANIMATION, x, y, flags, 5);
-        } else {
-            g.draw(&i, x, y, flags);
+            _ => {
+                if self.is_right_slide(inputs, world) {
+                    g.draw(&SLIP_IMAGE, x, y, flags);
+                } else if self.is_left_slide(inputs, world) {
+                    g.draw(&SLIP_IMAGE, x, y, flags);
+                } else if grounded && inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
+                    g.draw(&LIE_IMAGE, x, y, flags);
+                } else if grounded && 0.1 < f32::abs(self.velocity.x) {
+                    g.animate(&WALK_ANIMATION, x, y, flags, 5);
+                } else {
+                    g.draw(&i, x, y, flags);
+                }
+            }
         }
 
         if g.debug {
@@ -675,32 +701,4 @@ impl Body {
             }
         }
     }
-}
-
-fn play_jump_se() {
-    play(Sound {
-        freq1: 490,
-        freq2: 750,
-        attack: 0,
-        decay: 0,
-        sustain: 0,
-        release: 31,
-        volume: 18,
-        channel: 0,
-        mode: 1,
-    })
-}
-
-pub fn play_smash_se() {
-    play(Sound {
-        freq1: 140,
-        freq2: 70,
-        attack: 0,
-        decay: 0,
-        sustain: 0,
-        release: 8,
-        volume: 50,
-        channel: 3,
-        mode: 0,
-    })
 }
