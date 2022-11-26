@@ -447,9 +447,16 @@ impl Body {
             Stance::OnLadder(animation) => {
                 // はしご掴まり中の操作
                 if input.is_button_pressed(wasm4::BUTTON_DOWN) {
-                    self.stance = Stance::Neutral;
+                    self.stance = Stance::OnLadder(animation + 1);
+                    self.position.y += 0.5;
                 } else if input.is_button_pressed(wasm4::BUTTON_UP) {
                     self.stance = Stance::OnLadder(animation + 1);
+                    self.position.y -= 0.5;
+                }
+                if input.is_button_just_pressed(wasm4::BUTTON_1) {
+                    self.stance = Stance::Neutral;
+                    self.velocity.y = -JUMP_ACCELERATION;
+                    play_jump_se();
                 }
             }
             Stance::CliffHangging(stance) => {
@@ -503,8 +510,22 @@ impl Body {
                 }
             }
             Stance::Neutral => {
+                // はしごと重なっている場合ははしご掴まり状態へ
+                let touching_ladder = self.get_touching_ladder(world);
+                if input.is_button_just_pressed(wasm4::BUTTON_UP) && touching_ladder != None {
+                    match touching_ladder {
+                        Some((x, y)) => {
+                            self.stance = Stance::OnLadder(0);
+                            self.velocity.x = 0.0;
+                            self.velocity.y = 0.0;
+                            self.position.x = CELL_SIZE as f32 * x as f32;
+                            // self.position.y = CELL_SIZE as f32 * y as f32;
+                        }
+                        None => {}
+                    }
+                }
                 // 右ずり落ち中の操作
-                if self.is_right_slide(input, world) {
+                else if self.is_right_slide(input, world) {
                     // 右ずり落ち
                     if input.is_button_just_pressed(wasm4::BUTTON_1) {
                         self.velocity.y = -JUMP_ACCELERATION;
@@ -523,50 +544,29 @@ impl Body {
                         play_jump_se()
                     }
                 }
-                // 通常の移動操作
-                else {
-                    // 左右移動
-                    if !input.is_button_pressed(wasm4::BUTTON_DOWN) {
-                        if input.is_button_pressed(wasm4::BUTTON_LEFT) {
-                            if grounded {
-                                self.direction = Direction::Left;
-                            }
-                        }
-                        if input.is_button_pressed(wasm4::BUTTON_RIGHT) {
-                            if grounded {
-                                self.direction = Direction::Right;
-                            }
-                        }
-
-                        self.walk(speed_scale * input.horizontal_acceralation());
-                    }
-
-                    // はしごと重なっている場合ははしご掴まり状態へ
-
-                    if input.is_button_pressed(wasm4::BUTTON_UP) {
-                        match self.get_touching_ladder(world) {
-                            Some((x, y)) => {
-                                self.stance = Stance::OnLadder(0);
-                                self.velocity.x = 0.0;
-                                self.velocity.y = 0.0;
-                                self.position.x = CELL_SIZE as f32 * x as f32;
-                                // self.position.y = CELL_SIZE as f32 * y as f32;
-                            }
-                            None => {}
+                // ジャンプ
+                else if input.is_button_just_pressed(wasm4::BUTTON_1) {
+                    self.jump(world);
+                }
+                // 左右移動
+                else if !input.is_button_pressed(wasm4::BUTTON_DOWN) {
+                    if input.is_button_pressed(wasm4::BUTTON_LEFT) {
+                        if grounded {
+                            self.direction = Direction::Left;
                         }
                     }
-                    // ジャンプ
-                    else if input.is_button_just_pressed(wasm4::BUTTON_1) {
-                        self.jump(world);
+                    if input.is_button_pressed(wasm4::BUTTON_RIGHT) {
+                        if grounded {
+                            self.direction = Direction::Right;
+                        }
                     }
 
-                    // 空中で上昇中にジャンプボタンを離した場合は急速に加速度を失うことでジャンプ高さを調節できる
-                    if !grounded
-                        && !input.is_button_pressed(wasm4::BUTTON_1)
-                        && self.velocity.y < 0.0
-                    {
-                        self.velocity.y *= 0.1;
-                    }
+                    self.walk(speed_scale * input.horizontal_acceralation());
+                }
+
+                // 空中で上昇中にジャンプボタンを離した場合は急速に加速度を失うことでジャンプ高さを調節できる
+                if !grounded && !input.is_button_pressed(wasm4::BUTTON_1) && self.velocity.y < 0.0 {
+                    self.velocity.y *= 0.1;
                 }
 
                 // よじ登り判定
@@ -628,40 +628,6 @@ impl Body {
     }
 
     pub fn draw(&self, g: Graphics, world: &World, inputs: &Inputs) {
-        let flags = wasm4::BLIT_2BPP
-            | if self.direction == Direction::Right {
-                0
-            } else {
-                wasm4::BLIT_FLIP_X
-            };
-
-        let grounded = self.is_grounded(world);
-
-        let i: &Image = match self.stance {
-            Stance::OnLadder(animation) => {
-                if (animation / 8) % 2 == 0 {
-                    &PLAYER_LADDER0_IMAGE
-                } else {
-                    &PLAYER_LADDER1_IMAGE
-                }
-            }
-            _ => {
-                if !grounded {
-                    &JUMP_IMAGE
-                } else if inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
-                    &LIE_IMAGE
-                } else if inputs.is_button_pressed(wasm4::BUTTON_UP) {
-                    &LOOKUP_IMAGE
-                } else {
-                    &PLAYER_IMAGE
-                }
-            }
-        };
-
-        let x = (self.body_width * 0.5 - i.width as f32 * 0.5 + self.position.x.floor()) as i32;
-        let y = (self.body_height - i.height as f32 + self.position.y.floor()) as i32;
-
-        g.set_draw_color(0x4320);
         match self.stance {
             Stance::CliffHangging(_) => {
                 let x = (self.position.x).floor() as i32;
@@ -669,22 +635,56 @@ impl Body {
                     (self.body_height - CLIMB_IMAGE.height as f32 + self.position.y.floor()) as i32;
                 if self.direction == Direction::Right {
                     // TODO: refactor
-                    g.draw(&CLIMB_IMAGE, x - 2, y + 2, flags);
+                    g.set_draw_color(0x4320);
+                    g.draw(&CLIMB_IMAGE, x - 2, y + 2, self.direction.to_flags());
                 } else {
-                    g.draw(&CLIMB_IMAGE, x - 8, y + 2, flags);
+                    g.set_draw_color(0x4320);
+                    g.draw(&CLIMB_IMAGE, x - 8, y + 2, self.direction.to_flags());
                 }
             }
             _ => {
+                let grounded = self.is_grounded(world);
+
+                let i: &Image = match self.stance {
+                    Stance::OnLadder(animation) => {
+                        if (animation / 8) % 2 == 0 {
+                            &PLAYER_LADDER0_IMAGE
+                        } else {
+                            &PLAYER_LADDER1_IMAGE
+                        }
+                    }
+                    _ => {
+                        if !grounded {
+                            &JUMP_IMAGE
+                        } else if inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
+                            &LIE_IMAGE
+                        } else if inputs.is_button_pressed(wasm4::BUTTON_UP) {
+                            &LOOKUP_IMAGE
+                        } else {
+                            &PLAYER_IMAGE
+                        }
+                    }
+                };
+
+                let x =
+                    (self.body_width * 0.5 - i.width as f32 * 0.5 + self.position.x.floor()) as i32;
+                let y = (self.body_height - i.height as f32 + self.position.y.floor()) as i32;
+
                 if self.is_right_slide(inputs, world) {
-                    g.draw(&SLIP_IMAGE, x, y, flags);
+                    g.set_draw_color(0x4320);
+                    g.draw(&SLIP_IMAGE, x, y, self.direction.to_flags());
                 } else if self.is_left_slide(inputs, world) {
-                    g.draw(&SLIP_IMAGE, x, y, flags);
+                    g.set_draw_color(0x4320);
+                    g.draw(&SLIP_IMAGE, x, y, self.direction.to_flags());
                 } else if grounded && inputs.is_button_pressed(wasm4::BUTTON_DOWN) {
-                    g.draw(&LIE_IMAGE, x, y, flags);
+                    g.set_draw_color(0x4320);
+                    g.draw(&LIE_IMAGE, x, y, self.direction.to_flags());
                 } else if grounded && 0.1 < f32::abs(self.velocity.x) {
-                    g.animate(&WALK_ANIMATION, x, y, flags, 5);
+                    g.set_draw_color(0x4320);
+                    g.animate(&WALK_ANIMATION, x, y, self.direction.to_flags(), 5);
                 } else {
-                    g.draw(&i, x, y, flags);
+                    g.set_draw_color(0x4320);
+                    g.draw(&i, x, y, self.direction.to_flags());
                 }
             }
         }

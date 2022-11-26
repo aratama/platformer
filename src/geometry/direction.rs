@@ -1,3 +1,5 @@
+use crate::wasm4;
+
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Direction {
     Left,
@@ -20,6 +22,14 @@ impl Direction {
             Direction::Right
         } else {
             Direction::Left
+        }
+    }
+
+    pub fn to_flags(&self) -> u32 {
+        if *self == Direction::Right {
+            0
+        } else {
+            wasm4::BLIT_FLIP_X
         }
     }
 }
