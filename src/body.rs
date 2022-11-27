@@ -539,7 +539,7 @@ impl Body {
 
                 // trace(format!("neutral {}", touching_ladder == None));
 
-                if input.is_button_just_pressed(BUTTON_UP) && touching_ladder != None {
+                if input.is_button_pressed(BUTTON_UP) && touching_ladder != None {
                     match touching_ladder {
                         Some((x, _)) => {
                             self.stance = Stance::OnLadder(0);
@@ -574,6 +574,8 @@ impl Body {
                 // ジャンプ
                 else if input.is_button_just_pressed(JUMP_BUTTON) {
                     self.jump(world);
+                } else if self.is_grounded(world) && input.is_button_pressed(BUTTON_DOWN) {
+                    self.velocity.x = 0.0;
                 }
                 // 左右移動
                 else if !input.is_button_pressed(BUTTON_DOWN) {
