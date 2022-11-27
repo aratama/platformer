@@ -7,7 +7,7 @@ use crate::image::ladder::LADDER_IMAGE;
 use crate::image::sting::STING_IMAGE;
 use crate::image::tile::TILE_IMAGE;
 use crate::palette::set_draw_color;
-use crate::wasm4;
+use crate::wasm4::*;
 use crate::world_map::{WORLD, WORLD_WIDTH};
 pub const CELL_SIZE: u32 = 8;
 
@@ -112,19 +112,13 @@ impl World {
             // 看板のように基準位置より右に描くものがあるので、 - CELL_SIZE で少し広めにとる
             i32::max(0, -g.dx - CELL_SIZE as i32) as u32 / CELL_SIZE,
         );
-        let max_x = u32::min(
-            min_x + (wasm4::SCREEN_SIZE / CELL_SIZE) + 2,
-            self.width as u32,
-        );
+        let max_x = u32::min(min_x + (SCREEN_SIZE / CELL_SIZE) + 2, self.width as u32);
         let min_y = u32::max(
             0,
             // 看板のように基準位置より右に描くものがあるので、 - CELL_SIZE で少し広めにとる
             i32::max(0, -g.dy - CELL_SIZE as i32) as u32 / CELL_SIZE,
         );
-        let max_y = u32::min(
-            min_y + (wasm4::SCREEN_SIZE / CELL_SIZE) + 2,
-            self.height as u32,
-        );
+        let max_y = u32::min(min_y + (SCREEN_SIZE / CELL_SIZE) + 2, self.height as u32);
         for y in min_y..(max_y + 1) {
             for x in min_x..max_x {
                 let cell = self.get_cell(x as i32, y as i32);
@@ -157,7 +151,7 @@ impl World {
                             &BOARD_RIGHT_IMAGE,
                             (CELL_SIZE * x) as i32,
                             (CELL_SIZE * y) as i32,
-                            BOARD_RIGHT_IMAGE.flags | wasm4::BLIT_FLIP_X,
+                            BOARD_RIGHT_IMAGE.flags | BLIT_FLIP_X,
                         );
                     }
 
@@ -173,12 +167,14 @@ impl World {
 
                     Block::Ladder => {
                         g.set_draw_color(0x4320);
-                        g.draw(
-                            &LADDER_IMAGE,
-                            (CELL_SIZE * x) as i32,
-                            (CELL_SIZE * y) as i32,
-                            0,
-                        );
+                        if x % 1 == 0 {
+                            g.draw(
+                                &LADDER_IMAGE,
+                                (CELL_SIZE * x) as i32,
+                                (CELL_SIZE * y) as i32,
+                                0,
+                            );
+                        }
                     }
 
                     Block::Sting => {

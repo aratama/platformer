@@ -8,7 +8,7 @@ use crate::save::{load, save, GameData, GAME_DATA_VERSION};
 use crate::scene::Scene;
 use crate::se::play_smash_se;
 use crate::sound::set_bgm;
-use crate::wasm4;
+use crate::wasm4::*;
 use crate::world::{World, CELL_SIZE};
 use crate::world_map::WORLD_HEIGHT;
 use fastrand::Rng;
@@ -52,8 +52,8 @@ impl GameScene {
         //     Body::new(
         //     "fruit",
         //     Vector2::new(
-        //         rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
-        //         rng.i32(0..wasm4::SCREEN_SIZE as i32) as f32,
+        //         rng.i32(0..SCREEN_SIZE as i32) as f32,
+        //         rng.i32(0..SCREEN_SIZE as i32) as f32,
         //     ),
         //     FRUIT_IMAGE,
         //     CELL_SIZE as f32,
@@ -78,7 +78,9 @@ impl GameScene {
         self.frame_count += 1;
 
         for player in self.players.iter_mut() {
-            player.update(&self.world);
+            if player.active {
+                player.update(&self.world);
+            }
         }
 
         for fruit in self.fruits.iter_mut() {
@@ -93,7 +95,7 @@ impl GameScene {
                 (WORLD_HEIGHT as f32 * CELL_SIZE as f32 - (player1.position.y)) as f32,
             );
 
-            if inputs.is_button_just_pressed(wasm4::BUTTON_2) {
+            if inputs.is_button_just_pressed(BUTTON_2) {
                 // self.debug = !self.debug;
                 let game_data: GameData = GameData {
                     version: GAME_DATA_VERSION,
@@ -102,8 +104,8 @@ impl GameScene {
                 };
                 save(&game_data);
                 let loaded: GameData = load();
-                wasm4::trace(int_to_string(loaded.x as u32));
-                wasm4::trace(int_to_string(loaded.y as u32));
+                trace(int_to_string(loaded.x as u32));
+                trace(int_to_string(loaded.y as u32));
             }
         }
 
@@ -142,8 +144,8 @@ impl GameScene {
     fn render(&mut self) {
         let my_player = self.players[get_my_net_player_index() as usize];
         let player_center = my_player.center();
-        let dx = wasm4::SCREEN_SIZE as i32 / 2 - player_center.x.floor() as i32;
-        let dy = wasm4::SCREEN_SIZE as i32 / 2 - player_center.y.floor() as i32
+        let dx = SCREEN_SIZE as i32 / 2 - player_center.x.floor() as i32;
+        let dy = SCREEN_SIZE as i32 / 2 - player_center.y.floor() as i32
             + i32::max(0, my_player.player_lookup);
         let graphics = Graphics {
             frame_count: self.frame_count,
@@ -158,10 +160,10 @@ impl GameScene {
             if self.score < h as f32 {
                 // let y = (dy as f32 + ((WORLD_HEIGHT - i * 10) as f32 * CELL_SIZE as f32)) as i32;
                 // ここでエラーになる？
-                // for x in 0..(wasm4::SCREEN_SIZE / 8) {
-                //     wasm4::hline(x as i32 * 8, y, 4);
+                // for x in 0..(SCREEN_SIZE / 8) {
+                //     hline(x as i32 * 8, y, 4);
                 // }
-                // wasm4::text(int_to_string(i * 10), 1, y + 2);
+                // text(int_to_string(i * 10), 1, y + 2);
             }
         }
 
@@ -181,12 +183,12 @@ impl GameScene {
 
         // score
         set_draw_color(0x41);
-        wasm4::text(int_to_string(self.score as u32 / CELL_SIZE), 0, 0);
+        text(int_to_string(self.score as u32 / CELL_SIZE), 0, 0);
 
         if self.debug && !is_netplay_active() {
             let player1 = &self.players[0];
             set_draw_color(0x41);
-            wasm4::text(
+            text(
                 format!(
                     "{0: >04}, {1: >04}",
                     player1.position.x.floor(),

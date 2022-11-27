@@ -1,4 +1,4 @@
-use crate::wasm4;
+use crate::wasm4::*;
 
 pub struct Sound {
     pub freq1: u32,
@@ -16,7 +16,7 @@ pub fn play(sound: Sound) {
     let freq = sound.freq1 | sound.freq2 << 16;
     let duration = sound.attack << 24 | sound.decay << 16 | sound.sustain | sound.release << 8;
     let flags = sound.channel | sound.mode << 2;
-    wasm4::tone(freq, duration, sound.volume, flags);
+    tone(freq, duration, sound.volume, flags);
 }
 
 static mut BGM_MUSIC_COUNT: u32 = 0;

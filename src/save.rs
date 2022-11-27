@@ -1,4 +1,4 @@
-use crate::wasm4::{diskr, diskw};
+use crate::wasm4::*;
 use bytes::{Buf, BufMut};
 use std::mem::size_of;
 

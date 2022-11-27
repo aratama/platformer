@@ -3,7 +3,7 @@ use crate::input::{update_gamepads, Inputs};
 use crate::scene::title_scene::TitleScene;
 use crate::scene::Scene;
 use crate::sound::update_bgm;
-use crate::wasm4;
+use crate::wasm4::*;
 
 pub struct Game {
     prev_gamepad1: u8,
@@ -27,9 +27,9 @@ impl Game {
     }
 
     pub fn update(&mut self) {
-        let gamepad2 = unsafe { *wasm4::GAMEPAD2 };
-        let gamepad3 = unsafe { *wasm4::GAMEPAD3 };
-        let gamepad4 = unsafe { *wasm4::GAMEPAD4 };
+        let gamepad2 = unsafe { *GAMEPAD2 };
+        let gamepad3 = unsafe { *GAMEPAD3 };
+        let gamepad4 = unsafe { *GAMEPAD4 };
 
         self.player_active[1] |= 0 < gamepad2;
         self.player_active[2] |= 0 < gamepad3;
@@ -45,7 +45,7 @@ impl Game {
             Option::None => {}
             Option::Some(next) => self.scene = next,
         }
-        self.prev_gamepad1 = unsafe { *wasm4::GAMEPAD1 };
+        self.prev_gamepad1 = unsafe { *GAMEPAD1 };
 
         update_bgm();
         update_gamepads();

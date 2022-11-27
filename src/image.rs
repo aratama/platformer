@@ -18,7 +18,7 @@ pub mod walk1;
 pub mod walk2;
 pub mod walk3;
 
-use crate::wasm4;
+use crate::wasm4::*;
 
 pub struct Image {
     pub width: u32,
@@ -29,6 +29,19 @@ pub struct Image {
 
 impl Image {
     pub fn draw(&self, x: i32, y: i32, flags: u32) {
-        wasm4::blit(self.data, x, y, self.width, self.height, self.flags | flags);
+        blit(self.data, x, y, self.width, self.height, self.flags | flags);
+    }
+    pub fn draw_sub(&self, x: i32, y: i32, w: u32, h: u32, src_x: u32, src_y: u32, flags: u32) {
+        blit_sub(
+            self.data,
+            x,
+            y,
+            w,
+            h,
+            src_x,
+            src_y,
+            self.width,
+            self.flags | flags,
+        );
     }
 }
