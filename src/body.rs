@@ -59,6 +59,8 @@ const CLING_MERGIN: f32 = 2.0;
 const MIN_PLAYER_LOOKUP: i32 = -60;
 const MAX_PLAYER_LOOKUP: i32 = 70;
 
+const JUMP_BUTTON: u8 = BUTTON_1;
+
 #[derive(Clone, Copy)]
 pub struct Body {
     // [0,3] ゲームパッドの名前 1-4 とずれているので注意
@@ -453,7 +455,7 @@ impl Body {
             }
             Stance::OnLadder(animation) => {
                 // はしご上でのジャンプ
-                if input.is_button_just_pressed(BUTTON_1) {
+                if input.is_button_just_pressed(JUMP_BUTTON) {
                     self.stance = Stance::Neutral;
                     self.velocity.y = -JUMP_ACCELERATION;
                     self.velocity.x = input.horizontal_acceralation() * 0.5;
@@ -522,7 +524,7 @@ impl Body {
                 }
 
                 // 掴まり中のジャンプは、キー入力方向に跳ねることができる
-                if input.is_button_just_pressed(BUTTON_1) {
+                if input.is_button_just_pressed(JUMP_BUTTON) {
                     self.velocity.y = -JUMP_ACCELERATION;
                     self.velocity.x = 1.0 * input.horizontal_acceralation();
                     self.stance = Stance::Neutral;
@@ -552,7 +554,7 @@ impl Body {
                 // 右ずり落ち中の操作
                 else if self.is_right_slide(input, world) {
                     // 右ずり落ち
-                    if input.is_button_just_pressed(BUTTON_1) {
+                    if input.is_button_just_pressed(JUMP_BUTTON) {
                         self.velocity.y = -JUMP_ACCELERATION;
                         self.velocity.x = -1.0;
                         self.direction = Direction::Left;
@@ -562,7 +564,7 @@ impl Body {
                 // 左ずり落ち中の操作
                 else if self.is_left_slide(input, world) {
                     // 左ずり落ち
-                    if input.is_button_just_pressed(BUTTON_1) {
+                    if input.is_button_just_pressed(JUMP_BUTTON) {
                         self.velocity.y = -JUMP_ACCELERATION;
                         self.velocity.x = 1.0;
                         self.direction = Direction::Right;
@@ -570,7 +572,7 @@ impl Body {
                     }
                 }
                 // ジャンプ
-                else if input.is_button_just_pressed(BUTTON_1) {
+                else if input.is_button_just_pressed(JUMP_BUTTON) {
                     self.jump(world);
                 }
                 // 左右移動
@@ -590,7 +592,7 @@ impl Body {
                 }
 
                 // 空中で上昇中にジャンプボタンを離した場合は急速に加速度を失うことでジャンプ高さを調節できる
-                if !grounded && !input.is_button_pressed(BUTTON_1) && self.velocity.y < 0.0 {
+                if !grounded && !input.is_button_pressed(JUMP_BUTTON) && self.velocity.y < 0.0 {
                     self.velocity.y *= 0.1;
                 }
 

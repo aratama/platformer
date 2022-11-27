@@ -184,10 +184,15 @@ impl GameScene {
         // score
         set_draw_color(0x41);
         text(int_to_string(self.score as u32 / CELL_SIZE), 0, 0);
-
-        let min = self.frame_count / (60 * 60);
-        let sec = (self.frame_count - 60 * min) / 60;
-        text(int_to_string(sec), 128, 0);
+        let min = self.frame_count / 3600;
+        let sec = (self.frame_count - 3600 * min) / 60;
+        let frames = self.frame_count - 3600 * min - 60 * sec;
+        let l = 96;
+        draw_digits(min, l, 0);
+        text(":", l + 16, 0);
+        draw_digits(sec, l + 16 + 8, 0);
+        text("'", l + 16 + 8 + 16, 0);
+        draw_digits(frames, l + 16 + 8 + 16 + 8, 0);
 
         if self.debug && !is_netplay_active() {
             let player1 = &self.players[0];
@@ -205,16 +210,41 @@ impl GameScene {
     }
 }
 
+fn draw_digit(d: u32, x: i32, y: i32) {
+    text(
+        match d {
+            0 => "0",
+            1 => "1",
+            2 => "2",
+            3 => "3",
+            4 => "4",
+            5 => "5",
+            6 => "6",
+            7 => "7",
+            8 => "8",
+            9 => "9",
+            _ => "X",
+        },
+        x,
+        y,
+    );
+}
+
+fn draw_digits(d: u32, x: i32, y: i32) {
+    draw_digit(d / 10, x, y);
+    draw_digit(d % 10, x + 8, y);
+}
+
 fn int_to_string(v: u32) -> String {
     fn int_to_char(digit: u32) -> u8 {
         b'0' + (digit as u8)
     }
-
     let buf: &[u8; 4] = &[
         int_to_char(v / 1000),
         int_to_char(v % 1000 / 100),
         int_to_char(v % 100 / 10),
         int_to_char(v % 10),
     ];
-    str::from_utf8(buf).unwrap().to_string()
+    let t = str::from_utf8(buf).unwrap_or("9999").to_string();
+    t
 }
