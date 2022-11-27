@@ -185,6 +185,10 @@ impl GameScene {
         set_draw_color(0x41);
         text(int_to_string(self.score as u32 / CELL_SIZE), 0, 0);
 
+        let min = self.frame_count / (60 * 60);
+        let sec = (self.frame_count - 60 * min) / 60;
+        text(int_to_string(sec), 128, 0);
+
         if self.debug && !is_netplay_active() {
             let player1 = &self.players[0];
             set_draw_color(0x41);

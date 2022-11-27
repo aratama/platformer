@@ -16,6 +16,7 @@ use crate::input::Inputs;
 use crate::se::play_jump_se;
 use crate::wasm4::*;
 use crate::world::{Block, World, CELL_SIZE};
+use crate::world_map::{WORLD_HEIGHT, WORLD_WIDTH};
 
 // 重力
 const GRAVITY_X: f32 = 0.0;
@@ -245,6 +246,12 @@ impl Body {
         }
 
         self.vibration = i32::max(0, self.vibration - 1);
+
+        // 制約
+        self.position.x = f32::max(0.0, self.position.x);
+        self.position.y = f32::max(0.0, self.position.y);
+        self.position.x = f32::min((CELL_SIZE * (WORLD_WIDTH - 1)) as f32, self.position.x);
+        self.position.y = f32::min((CELL_SIZE * (WORLD_HEIGHT - 1)) as f32, self.position.y);
     }
 
     pub fn is_grounded(&self, world: &World) -> bool {
@@ -445,8 +452,14 @@ impl Body {
                 self.stance = Stance::Wait(u32::max(0, wait - 1));
             }
             Stance::OnLadder(animation) => {
-                // はしご掴まり中の操作
-                if input.is_button_pressed(BUTTON_DOWN) {
+                // はしご上でのジャンプ
+                if input.is_button_just_pressed(BUTTON_1) {
+                    self.stance = Stance::Neutral;
+                    self.velocity.y = -JUMP_ACCELERATION;
+                    self.velocity.x = input.horizontal_acceralation() * 0.5;
+                    self.direction = input.direction().unwrap_or(self.direction);
+                    play_jump_se();
+                } else if input.is_button_pressed(BUTTON_DOWN) {
                     self.move_body(0.0, 0.5, world);
                     match self.get_touching_ladder(world) {
                         None => {
@@ -466,12 +479,6 @@ impl Body {
                             self.stance = Stance::OnLadder(animation + 1);
                         }
                     }
-                } else if input.is_button_just_pressed(BUTTON_1) {
-                    self.stance = Stance::Neutral;
-                    self.velocity.y = -JUMP_ACCELERATION;
-                    self.velocity.x = input.horizontal_acceralation() * 1.0;
-                    self.direction = input.direction().unwrap_or(self.direction);
-                    play_jump_se();
                 }
             }
             Stance::CliffHangging(stance) => {

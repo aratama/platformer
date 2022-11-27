@@ -168,10 +168,14 @@ impl World {
                     Block::Ladder => {
                         g.set_draw_color(0x4320);
                         if x % 1 == 0 {
-                            g.draw(
+                            g.draw_sub(
                                 &LADDER_IMAGE,
                                 (CELL_SIZE * x) as i32,
                                 (CELL_SIZE * y) as i32,
+                                CELL_SIZE,
+                                CELL_SIZE,
+                                0,
+                                0,
                                 0,
                             );
                         }
