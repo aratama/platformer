@@ -1,6 +1,8 @@
 //
 // WASM-4: https://wasm4.org/docs
 
+#![allow(unused)]
+
 // ┌───────────────────────────────────────────────────────────────────────────┐
 // │                                                                           │
 // │ Platform Constants                                                        │
@@ -15,7 +17,7 @@ pub const SCREEN_SIZE: u32 = 160;
 // │                                                                           │
 // └───────────────────────────────────────────────────────────────────────────┘
 
-pub static mut PALETTE: *mut [u32; 4] = 0x04 as *mut [u32; 4];
+pub const PALETTE: *mut [u32; 4] = 0x04 as *mut [u32; 4];
 pub const DRAW_COLORS: *mut u16 = 0x14 as *mut u16;
 pub const GAMEPAD1: *const u8 = 0x16 as *const u8;
 pub const GAMEPAD2: *const u8 = 0x17 as *const u8;
@@ -24,7 +26,9 @@ pub const GAMEPAD4: *const u8 = 0x19 as *const u8;
 pub const MOUSE_X: *const i16 = 0x1a as *const i16;
 pub const MOUSE_Y: *const i16 = 0x1c as *const i16;
 pub const MOUSE_BUTTONS: *const u8 = 0x1e as *const u8;
-pub static mut FRAMEBUFFER: *mut [u8; 6400] = 0xa0 as *mut [u8; 6400];
+pub const SYSTEM_FLAGS: *mut u8 = 0x1f as *mut u8;
+pub const NETPLAY: *const u8 = 0x20 as *const u8;
+pub const FRAMEBUFFER: *mut [u8; 6400] = 0xa0 as *mut [u8; 6400];
 
 pub const BUTTON_1: u8 = 1;
 pub const BUTTON_2: u8 = 2;
@@ -32,6 +36,13 @@ pub const BUTTON_LEFT: u8 = 16;
 pub const BUTTON_RIGHT: u8 = 32;
 pub const BUTTON_UP: u8 = 64;
 pub const BUTTON_DOWN: u8 = 128;
+
+pub const MOUSE_LEFT: u8 = 1;
+pub const MOUSE_RIGHT: u8 = 2;
+pub const MOUSE_MIDDLE: u8 = 4;
+
+pub const SYSTEM_PRESERVE_FRAMEBUFFER: u8 = 1;
+pub const SYSTEM_HIDE_GAMEPAD_OVERLAY: u8 = 2;
 
 // ┌───────────────────────────────────────────────────────────────────────────┐
 // │                                                                           │
@@ -124,7 +135,7 @@ extern "C" {
 }
 
 /// Draws text using the built-in system font.
-pub fn text<T: AsRef<str>>(text: T, x: i32, y: i32) {
+pub fn text<T: AsRef<[u8]>>(text: T, x: i32, y: i32) {
     let text_ref = text.as_ref();
     unsafe { extern_text(text_ref.as_ptr(), text_ref.len(), x, y) }
 }
@@ -180,6 +191,8 @@ pub const TONE_MODE1: u32 = 0;
 pub const TONE_MODE2: u32 = 4;
 pub const TONE_MODE3: u32 = 8;
 pub const TONE_MODE4: u32 = 12;
+pub const TONE_PAN_LEFT: u32 = 16;
+pub const TONE_PAN_RIGHT: u32 = 32;
 
 // ┌───────────────────────────────────────────────────────────────────────────┐
 // │                                                                           │
