@@ -29,7 +29,6 @@ pub struct GameScene {
     fruits: std::vec::Vec<Body>,
     world: World,
     debug: bool,
-    score: f32,
 
     prev_gamepads: [u8; 4],
 }
@@ -68,7 +67,6 @@ impl GameScene {
             rng,
             world,
             debug: false,
-            score: 0.0,
 
             prev_gamepads: [0, 0, 0, 0],
         }
@@ -90,11 +88,6 @@ impl GameScene {
         // セーブ関係
         if !is_netplay_active() {
             let player1 = &self.players[0];
-            self.score = f32::max(
-                self.score,
-                (WORLD_HEIGHT as f32 * CELL_SIZE as f32 - (player1.position.y)) as f32,
-            );
-
             if inputs.is_button_just_pressed(BUTTON_2) {
                 // self.debug = !self.debug;
                 let game_data: GameData = GameData {
@@ -154,19 +147,6 @@ impl GameScene {
             dy,
         };
 
-        // set_draw_color(0x02);
-        for i in 0..10 {
-            let h = (i * 10) as f32 * CELL_SIZE as f32;
-            if self.score < h as f32 {
-                // let y = (dy as f32 + ((WORLD_HEIGHT - i * 10) as f32 * CELL_SIZE as f32)) as i32;
-                // ここでエラーになる？
-                // for x in 0..(SCREEN_SIZE / 8) {
-                //     hline(x as i32 * 8, y, 4);
-                // }
-                // text(int_to_string(i * 10), 1, y + 2);
-            }
-        }
-
         set_draw_color(0x3210);
         self.world.draw(graphics);
 
@@ -182,18 +162,37 @@ impl GameScene {
         // }
 
         // score
-        set_draw_color(0x41);
-        text(int_to_string(self.score as u32 / CELL_SIZE), 0, 0);
-        let min = self.frame_count / 3600;
-        let sec = (self.frame_count - 3600 * min) / 60;
-        let frames = self.frame_count - 3600 * min - 60 * sec;
-        let l = 96;
-        draw_digits(min, l, 0);
-        text(":", l + 16, 0);
-        draw_digits(sec, l + 16 + 8, 0);
-        text("'", l + 16 + 8 + 16, 0);
-        draw_digits(frames, l + 16 + 8 + 16 + 8, 0);
+        set_draw_color(0x4);
+        rect(0, 0, 160, 8);
+        rect(0, 151, 160, 9);
+        if self.players[0].active {
+            draw_score("1", self.players[0].score as u32, 0);
+        }
+        if self.players[1].active {
+            draw_score("2", self.players[1].score as u32, 40);
+        }
+        if self.players[2].active {
+            draw_score("3", self.players[2].score as u32, 80);
+        }
+        if self.players[3].active {
+            draw_score("4", self.players[3].score as u32, 120);
+        }
 
+        // stopwatch
+        let hours = self.frame_count / 216000;
+        let mins = (self.frame_count - 216000 * hours) / 3600;
+        let secs = (self.frame_count - 216000 * hours - 3600 * mins) / 60;
+        let frames = self.frame_count - 216000 * hours - 3600 * mins - 60 * secs;
+        let l = 72;
+        draw_digits(hours, l, 0);
+        text(":", l + 16, 0);
+        draw_digits(mins, l + 24, 0);
+        text(":", l + 40, 0);
+        draw_digits(secs, l + 48, 0);
+        text("'", l + 64, 0);
+        draw_digits(frames, l + 72, 0);
+
+        // debug draw
         if self.debug && !is_netplay_active() {
             let player1 = &self.players[0];
             set_draw_color(0x41);
@@ -208,6 +207,13 @@ impl GameScene {
             );
         }
     }
+}
+
+fn draw_score(index: &str, score: u32, x: i32) {
+    set_draw_color(0x24);
+    text(index, x, 152);
+    set_draw_color(0x41);
+    text(int_to_string(score / CELL_SIZE), x + 8, 152);
 }
 
 fn draw_digit(d: u32, x: i32, y: i32) {

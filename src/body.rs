@@ -90,6 +90,8 @@ pub struct Body {
     pub vibration: i32,
 
     pub stance: Stance,
+
+    pub score: f32,
 }
 
 #[derive(Clone, Copy)]
@@ -140,6 +142,7 @@ impl Body {
             vibration: 0,
             active,
             stance: Stance::Neutral,
+            score: 0.0,
         }
     }
 
@@ -254,6 +257,12 @@ impl Body {
         self.position.y = f32::max(0.0, self.position.y);
         self.position.x = f32::min((CELL_SIZE * (WORLD_WIDTH - 1)) as f32, self.position.x);
         self.position.y = f32::min((CELL_SIZE * (WORLD_HEIGHT - 1)) as f32, self.position.y);
+
+        // スコア計算
+        self.score = f32::max(
+            self.score,
+            (WORLD_HEIGHT as f32 * CELL_SIZE as f32 - (self.position.y)) as f32,
+        );
     }
 
     pub fn is_grounded(&self, world: &World) -> bool {
