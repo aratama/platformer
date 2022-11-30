@@ -10,7 +10,6 @@ use crate::se::play_smash_se;
 use crate::sound::set_bgm;
 use crate::wasm4::*;
 use crate::world::{World, CELL_SIZE};
-use crate::world_map::WORLD_HEIGHT;
 use fastrand::Rng;
 use std::str;
 

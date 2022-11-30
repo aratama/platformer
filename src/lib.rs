@@ -35,12 +35,10 @@ mod wasm4;
 mod world;
 mod world_map;
 use game::Game;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::sync::Mutex;
 
-lazy_static! {
-    static ref GAME: Mutex<Game> = Mutex::new(Game::new());
-}
+static GAME: Lazy<Mutex<Game>> = Lazy::new(|| Mutex::new(Game::new()));
 
 #[no_mangle]
 fn start() {

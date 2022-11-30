@@ -21,7 +21,7 @@ dependencies = [
  "buddy-alloc",
  "bytes",
  "fastrand",
- "lazy_static",
+ "once_cell",
 ]
 
 [[package]]
@@ -49,7 +49,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lazy_static"
-version = "1.4.0"
+name = "once_cell"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
