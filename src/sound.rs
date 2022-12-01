@@ -23,7 +23,7 @@ static mut BGM_MUSIC_COUNT: u32 = 0;
 
 static mut CURRENT_BGM: Option<&'static Music> = Option::None;
 
-static mut MASTER_VOLUE: u32 = 0;
+static mut MASTER_VOLUE: u32 = 100;
 // static mut MASTER_VOLUE: u32 = 100;
 
 pub fn set_bgm(bgm: Option<&'static Music>) {

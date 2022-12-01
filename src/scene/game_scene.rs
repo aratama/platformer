@@ -10,6 +10,7 @@ use crate::se::play_smash_se;
 use crate::sound::set_bgm;
 use crate::wasm4::*;
 use crate::world::{World, CELL_SIZE};
+use crate::world_map::WORLD_HEIGHT;
 use fastrand::Rng;
 use std::str;
 
@@ -165,16 +166,16 @@ impl GameScene {
         rect(0, 0, 160, 8);
         rect(0, 151, 160, 9);
         if self.players[0].active {
-            draw_score("1", self.players[0].score as u32, 0);
+            draw_score("1", self.players[0], 0);
         }
         if self.players[1].active {
-            draw_score("2", self.players[1].score as u32, 40);
+            draw_score("2", self.players[1], 40);
         }
         if self.players[2].active {
-            draw_score("3", self.players[2].score as u32, 80);
+            draw_score("3", self.players[2], 80);
         }
         if self.players[3].active {
-            draw_score("4", self.players[3].score as u32, 120);
+            draw_score("4", self.players[3], 120);
         }
 
         // stopwatch
@@ -208,11 +209,12 @@ impl GameScene {
     }
 }
 
-fn draw_score(index: &str, score: u32, x: i32) {
+fn draw_score(index: &str, player: Body, x: i32) {
+    let score = WORLD_HEIGHT - (player.position.y / CELL_SIZE as f32) as u32;
     set_draw_color(0x24);
     text(index, x, 152);
     set_draw_color(0x41);
-    text(int_to_string(score / CELL_SIZE), x + 8, 152);
+    text(int_to_string(score), x + 8, 152);
 }
 
 fn draw_digit(d: u32, x: i32, y: i32) {
