@@ -119,7 +119,6 @@ pub enum Stance {
 impl Body {
     pub fn new(
         player_index: usize,
-        active: bool,
         name: &'static str,
         position: Vector2,
         body_width: f32,
@@ -139,21 +138,8 @@ impl Body {
         }
     }
 
-    pub fn create_player(
-        player_index: usize,
-        active: bool,
-        name: &'static str,
-        player_x: f32,
-        player_y: f32,
-    ) -> Self {
-        Body::new(
-            player_index,
-            active,
-            name,
-            Vector2::new(player_x, player_y),
-            6.0,
-            12.0,
-        )
+    pub fn create_player(player_index: usize, name: &'static str, position: Vector2) -> Self {
+        Body::new(player_index, name, position, 6.0, 12.0)
     }
 
     /**

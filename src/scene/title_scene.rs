@@ -29,10 +29,12 @@ impl Graphics {
         set_draw_color(0x41);
         self.rect(0, 0, 80, 21);
         set_draw_color(0x4);
-        self.text("New Game", 12, 2);
-        self.text("Continue", 12, 12);
 
-        self.text(">", 4, 2 + 8 * index as i32);
+        for (i, item) in items.iter().enumerate() {
+            self.text(item, 12, 2 + 10 * i as i32);
+        }
+
+        self.text(">", 4, 2 + 10 * index as i32);
         self.transate(-x, -y);
     }
 }
@@ -61,7 +63,7 @@ impl TitleScene {
         let mut g = Graphics::new(self.frame_count);
 
         if self.menu_visible {
-            let items = [">New Game", " Continue"];
+            let items = ["New Game", "Continue"];
             g.draw_list(&items, self.menu_index as u8, 40, 120);
         } else {
             if (self.frame_count / 48) % 2 == 0 {
@@ -90,17 +92,11 @@ impl TitleScene {
 
             if inputs.is_button_just_pressed(BUTTON_1) {
                 return match self.menu_index {
-                    0 if inputs.is_button_just_pressed(BUTTON_1) => Option::Some(Scene::GameScene(
-                        GameScene::new(player_active, Option::None),
-                    )),
+                    0 if inputs.is_button_just_pressed(BUTTON_1) => {
+                        Option::Some(Scene::GameScene(GameScene::new(Option::None)))
+                    }
                     1 if inputs.is_button_just_pressed(BUTTON_1) => match load() {
-                        Some(data) => {
-                            let start_position = Option::Some(Vector2::new(data.x, data.y));
-                            Option::Some(Scene::GameScene(GameScene::new(
-                                player_active,
-                                start_position,
-                            )))
-                        }
+                        Some(data) => Option::Some(Scene::GameScene(GameScene::new(Some(data)))),
                         None => Option::None,
                     },
                     _ => Option::None,
@@ -109,10 +105,7 @@ impl TitleScene {
         } else {
             if inputs.is_button_just_pressed(BUTTON_1) {
                 return match self.save_data {
-                    Option::None => Option::Some(Scene::GameScene(GameScene::new(
-                        player_active,
-                        Option::None,
-                    ))),
+                    Option::None => Option::Some(Scene::GameScene(GameScene::new(Option::None))),
                     Option::Some(_) => {
                         self.menu_visible = true;
                         Option::None

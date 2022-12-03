@@ -35,19 +35,30 @@ pub struct GameScene {
 }
 
 impl GameScene {
-    pub fn new(player_active: &[bool; 4], start_position: Option<Vector2>) -> Self {
+    pub fn new(game_data: Option<GameData>) -> Self {
         let rng = Rng::with_seed(235);
-
         let world = World::new();
-
-        let player_position = start_position.unwrap_or(Vector2::new(world.start.x, world.start.y));
-        let player_x = player_position.x;
-        let player_y = player_position.y;
-
-        let player1 = Body::create_player(0, player_active[0], "player1", player_x, player_y);
-        let player2 = Body::create_player(1, player_active[1], "player2", player_x, player_y);
-        let player3 = Body::create_player(2, player_active[2], "player3", player_x, player_y);
-        let player4 = Body::create_player(3, player_active[3], "player4", player_x, player_y);
+        let init = Vector2::new(world.start.x, world.start.y);
+        let player1 = Body::create_player(
+            0,
+            "player1",
+            game_data.map(|data| data.player1_position).unwrap_or(init),
+        );
+        let player2 = Body::create_player(
+            1,
+            "player2",
+            game_data.map(|data| data.player2_position).unwrap_or(init),
+        );
+        let player3 = Body::create_player(
+            2,
+            "player3",
+            game_data.map(|data| data.player3_position).unwrap_or(init),
+        );
+        let player4 = Body::create_player(
+            3,
+            "player4",
+            game_data.map(|data| data.player4_position).unwrap_or(init),
+        );
 
         let fruits = vec![
         //     Body::new(
@@ -87,25 +98,17 @@ impl GameScene {
             fruit.physical_update(0, &self.world);
         }
 
-        // セーブ関係
-        if !is_netplay_active() {
-            let player1 = &self.players[0];
-            if inputs.is_button_just_pressed(BUTTON_2) {
-                // self.debug = !self.debug;
-                let game_data: GameData = GameData {
-                    version: GAME_DATA_VERSION,
-                    x: player1.position.x,
-                    y: player1.position.y,
-                };
-                save(&game_data);
-                match load() {
-                    Some(data) => {
-                        trace(int_to_string(data.x as u32));
-                        trace(int_to_string(data.y as u32));
-                    }
-                    None => trace("No save data"),
-                }
-            }
+        // 毎秒自動セーブする
+        if self.frame_count % 60 == 0 {
+            // self.debug = !self.debug;
+            let game_data: GameData = GameData {
+                version: GAME_DATA_VERSION,
+                player1_position: self.players[0].position,
+                player2_position: self.players[1].position,
+                player3_position: self.players[2].position,
+                player4_position: self.players[3].position,
+            };
+            save(&game_data);
         }
 
         // renders
@@ -137,7 +140,12 @@ impl GameScene {
                 return Option::Some(Scene::EndingScene(EndingScene::new()));
             }
         }
-        Option::None
+
+        if inputs.is_button_pressed(BUTTON_2) {
+            Some(Scene::GameScene(GameScene::new(None)))
+        } else {
+            Option::None
+        }
     }
 
     fn render(&mut self, player_actives: &[bool; 4]) {
