@@ -58,6 +58,20 @@ impl Inputs {
         r - l
     }
 
+    pub fn up_down(&self) -> i8 {
+        let up = if self.is_button_pressed(BUTTON_UP) {
+            1
+        } else {
+            0
+        };
+        let down = if self.is_button_pressed(BUTTON_DOWN) {
+            1
+        } else {
+            0
+        };
+        down - up
+    }
+
     /**
      * 左右矢印キーの状態をDirectionで返します
      */

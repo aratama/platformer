@@ -19,7 +19,7 @@ pub struct GameData {
 
 pub fn save(game_data: &GameData) {
     let mut buf = Vec::new();
-    buf.put_u8(0); // version
+    buf.put_u8(1); // version
     buf.put_f32_le(game_data.x); // x
     buf.put_f32_le(game_data.y); // y
     let bytes: &[u8] = buf.as_slice().try_into().unwrap();
@@ -28,7 +28,7 @@ pub fn save(game_data: &GameData) {
     }
 }
 
-pub fn load() -> GameData {
+pub fn load() -> Option<GameData> {
     let mut buffer: [u8; GAME_DATA_SIZE] = [0; GAME_DATA_SIZE];
     unsafe {
         diskr(buffer.as_mut_ptr(), buffer.len() as u32);
@@ -37,5 +37,9 @@ pub fn load() -> GameData {
     let version = p.get_u8();
     let x = p.get_f32_le();
     let y = p.get_f32_le();
-    GameData { version, x, y }
+    if version == 0 {
+        Option::None
+    } else {
+        Option::Some(GameData { version, x, y })
+    }
 }

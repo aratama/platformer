@@ -1,4 +1,5 @@
 use crate::body::Body;
+use crate::geometry::vector2::Vector2;
 use crate::graphics::Graphics;
 use crate::input::Inputs;
 use crate::music::level::LEVEL_BGM_SCORE;
@@ -34,13 +35,14 @@ pub struct GameScene {
 }
 
 impl GameScene {
-    pub fn new(player_active: &[bool; 4]) -> Self {
+    pub fn new(player_active: &[bool; 4], start_position: Option<Vector2>) -> Self {
         let rng = Rng::with_seed(235);
 
         let world = World::new();
 
-        let player_x = world.start.x;
-        let player_y = world.start.y;
+        let player_position = start_position.unwrap_or(Vector2::new(world.start.x, world.start.y));
+        let player_x = player_position.x;
+        let player_y = player_position.y;
 
         let player1 = Body::create_player(0, player_active[0], "player1", player_x, player_y);
         let player2 = Body::create_player(1, player_active[1], "player2", player_x, player_y);
@@ -96,9 +98,13 @@ impl GameScene {
                     y: player1.position.y,
                 };
                 save(&game_data);
-                let loaded: GameData = load();
-                trace(int_to_string(loaded.x as u32));
-                trace(int_to_string(loaded.y as u32));
+                match load() {
+                    Some(data) => {
+                        trace(int_to_string(data.x as u32));
+                        trace(int_to_string(data.y as u32));
+                    }
+                    None => trace("No save data"),
+                }
             }
         }
 

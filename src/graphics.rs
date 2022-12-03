@@ -77,4 +77,16 @@ impl Graphics {
         set_draw_color(0x01);
         text(&str, self.dx + x + 0, self.dy + y + 0);
     }
+
+    pub fn text<T>(&self, str: T, x: i32, y: i32)
+    where
+        T: AsRef<[u8]>,
+    {
+        text(&str, self.dx + x, self.dy + y)
+    }
+
+    pub fn transate(&mut self, dx: i32, dy: i32) {
+        self.dx += dx;
+        self.dy += dy;
+    }
 }
