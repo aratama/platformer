@@ -31,6 +31,8 @@ impl Game {
         let gamepad3 = unsafe { *GAMEPAD3 };
         let gamepad4 = unsafe { *GAMEPAD4 };
 
+        // trace(format!("{}", gamepad2));
+
         self.player_active[1] |= 0 < gamepad2;
         self.player_active[2] |= 0 < gamepad3;
         self.player_active[3] |= 0 < gamepad4;
@@ -38,8 +40,8 @@ impl Game {
         let inputs = Inputs::new(0);
         let result = match { &mut self.scene } {
             Scene::TitleScene(t) => t.update(&inputs, &self.player_active),
-            Scene::GameScene(g) => g.update(&inputs),
-            Scene::EndingScene(e) => e.update(&inputs),
+            Scene::GameScene(g) => g.update(&inputs, &self.player_active),
+            Scene::EndingScene(e) => e.update(&inputs, &self.player_active),
         };
         match result {
             Option::None => {}

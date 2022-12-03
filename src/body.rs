@@ -66,9 +66,6 @@ pub struct Body {
     // [0,3] ゲームパッドの名前 1-4 とずれているので注意
     pub player_index: usize,
 
-    // このプレイヤーが参加しているかどうか
-    pub active: bool,
-
     // オブジェクトの名前。使っていない
     pub name: &'static str,
 
@@ -138,7 +135,6 @@ impl Body {
             body_height,
             player_lookup: MIN_PLAYER_LOOKUP,
             vibration: 0,
-            active,
             stance: Stance::Neutral,
         }
     }
@@ -223,10 +219,6 @@ impl Body {
      */
     pub fn update(&mut self, world: &World) {
         let inputs = Inputs::new(self.player_index);
-
-        if inputs.is_any_button_just_pressed() {
-            self.active = true;
-        }
 
         self.input(&inputs, world);
 

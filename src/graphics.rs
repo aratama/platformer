@@ -1,5 +1,6 @@
 use crate::animation::Animation;
 use crate::image::Image;
+use crate::palette::set_draw_color;
 use crate::wasm4::*;
 
 #[derive(Clone, Copy, Default)]
@@ -11,6 +12,15 @@ pub struct Graphics {
 }
 
 impl Graphics {
+    pub fn new(frame_count: u32) -> Graphics {
+        Graphics {
+            frame_count: frame_count,
+            debug: false,
+            dx: 0,
+            dy: 0,
+        }
+    }
+
     pub fn blit(&self, sprite: &[u8], x: i32, y: i32, width: u32, height: u32, flags: u32) {
         blit(sprite, x + self.dx, y + self.dy, width, height, flags);
     }
@@ -49,5 +59,22 @@ impl Graphics {
         unsafe {
             *PALETTE = palette;
         }
+    }
+
+    pub fn draw_bold_text<T>(&self, str: T, x: i32, y: i32)
+    where
+        T: AsRef<[u8]>,
+    {
+        set_draw_color(0x04);
+        text(&str, self.dx + x + 0, self.dy + y - 1);
+        text(&str, self.dx + x + 0, self.dy + y + 1);
+        text(&str, self.dx + x - 1, self.dy + y + 0);
+        text(&str, self.dx + x + 1, self.dy + y + 0);
+        text(&str, self.dx + x - 1, self.dy + y - 1);
+        text(&str, self.dx + x + 1, self.dy + y - 1);
+        text(&str, self.dx + x - 1, self.dy + y + 1);
+        text(&str, self.dx + x + 1, self.dy + y + 1);
+        set_draw_color(0x01);
+        text(&str, self.dx + x + 0, self.dy + y + 0);
     }
 }

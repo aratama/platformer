@@ -16,7 +16,7 @@ impl EndingScene {
         EndingScene {}
     }
 
-    pub fn update(&mut self, inputs: &Inputs) -> Option<Scene> {
+    pub fn update(&mut self, inputs: &Inputs, player_active: &[bool; 4]) -> Option<Scene> {
         set_draw_color(0x34);
         text("You Win!", 10, 10);
 

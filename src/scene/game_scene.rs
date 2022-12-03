@@ -72,12 +72,12 @@ impl GameScene {
         }
     }
 
-    pub fn update(&mut self, inputs: &Inputs) -> Option<Scene> {
+    pub fn update(&mut self, inputs: &Inputs, player_active: &[bool; 4]) -> Option<Scene> {
         self.frame_count += 1;
 
-        for player in self.players.iter_mut() {
-            if player.active {
-                player.update(&self.world);
+        for (index, active) in player_active.iter().enumerate() {
+            if *active {
+                self.players[index].update(&self.world);
             }
         }
 
@@ -120,7 +120,7 @@ impl GameScene {
             }
         }
 
-        self.render();
+        self.render(player_active);
 
         // bgm
         set_bgm(Option::Some(LEVEL_BGM_SCORE));
@@ -134,7 +134,7 @@ impl GameScene {
         Option::None
     }
 
-    fn render(&mut self) {
+    fn render(&mut self, player_actives: &[bool; 4]) {
         let my_player = self.players[get_my_net_player_index() as usize];
         let player_center = my_player.center();
         let dx = SCREEN_SIZE as i32 / 2 - player_center.x.floor() as i32;
@@ -150,10 +150,10 @@ impl GameScene {
         set_draw_color(0x3210);
         self.world.draw(graphics);
 
-        for (i, player) in self.players.iter().enumerate() {
-            if player.active {
+        for (i, active) in player_actives.iter().enumerate() {
+            if *active {
                 let inptus = Inputs::new(i);
-                player.draw(graphics, &self.world, &inptus);
+                self.players[i].draw(graphics, &self.world, &inptus);
             }
         }
 
@@ -165,16 +165,16 @@ impl GameScene {
         set_draw_color(0x4);
         rect(0, 0, 160, 8);
         rect(0, 151, 160, 9);
-        if self.players[0].active {
+        if player_actives[0] {
             draw_score("1", self.players[0], 0);
         }
-        if self.players[1].active {
+        if player_actives[1] {
             draw_score("2", self.players[1], 40);
         }
-        if self.players[2].active {
+        if player_actives[2] {
             draw_score("3", self.players[2], 80);
         }
-        if self.players[3].active {
+        if player_actives[3] {
             draw_score("4", self.players[3], 120);
         }
 

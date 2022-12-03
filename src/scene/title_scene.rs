@@ -1,4 +1,6 @@
+use crate::graphics::Graphics;
 use crate::input::Inputs;
+use crate::netplay::is_netplay_active;
 use crate::scene::Scene;
 use crate::sound::set_bgm;
 use crate::wasm4::*;
@@ -21,6 +23,18 @@ impl TitleScene {
 
     pub fn update(&mut self, inputs: &Inputs, player_active: &[bool; 4]) -> Option<Scene> {
         self.draw_title_image();
+
+        set_draw_color(0x23);
+
+        if is_netplay_active() {
+            let g = Graphics::new(self.frame_count);
+            g.draw_bold_text("Netplay Players:", 2, 2);
+            let players: u32 = player_active
+                .map(|active| if active { 1 } else { 0 })
+                .iter()
+                .sum();
+            g.draw_bold_text(players.to_string(), 130, 2);
+        }
 
         set_bgm(Some(&LEVEL_BGM_SCORE));
 
