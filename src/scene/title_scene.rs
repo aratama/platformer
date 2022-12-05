@@ -1,4 +1,3 @@
-use crate::geometry::vector2::Vector2;
 use crate::graphics::Graphics;
 use crate::input::Inputs;
 use crate::netplay::is_netplay_active;
@@ -83,7 +82,7 @@ impl TitleScene {
             g.draw_bold_text(players.to_string(), 130, 2);
         }
 
-        set_bgm(Some(&LEVEL_BGM_SCORE));
+        set_bgm(Some(&LEVEL_BGM_SCORE), true);
 
         self.frame_count += 1;
 

@@ -21,12 +21,14 @@ pub fn play(sound: Sound) {
 
 static mut BGM_MUSIC_COUNT: u32 = 0;
 
+static mut LOOP_BGM: bool = false;
+
 static mut CURRENT_BGM: Option<&'static Music> = Option::None;
 
-static mut MASTER_VOLUE: u32 = 0;
+static mut MASTER_VOLUE: u32 = 50;
 // static mut MASTER_VOLUE: u32 = 100;
 
-pub fn set_bgm(bgm: Option<&'static Music>) {
+pub fn set_bgm(bgm: Option<&'static Music>, loop_music: bool) {
     unsafe {
         let reset = match (CURRENT_BGM, bgm) {
             (Some(r), Some(s)) => {
@@ -41,13 +43,14 @@ pub fn set_bgm(bgm: Option<&'static Music>) {
             BGM_MUSIC_COUNT = 0;
         }
         CURRENT_BGM = bgm;
+        LOOP_BGM = loop_music
     }
 }
 
 pub fn update_bgm() {
     unsafe {
         if let Option::Some(m) = CURRENT_BGM {
-            music(m, &mut BGM_MUSIC_COUNT, 0, true);
+            music(m, &mut BGM_MUSIC_COUNT, 0, LOOP_BGM);
         };
     }
 }

@@ -16,11 +16,11 @@ impl EndingScene {
         EndingScene {}
     }
 
-    pub fn update(&mut self, inputs: &Inputs, player_active: &[bool; 4]) -> Option<Scene> {
+    pub fn update(&mut self, inputs: &Inputs, _player_active: &[bool; 4]) -> Option<Scene> {
         set_draw_color(0x34);
         text("You Win!", 10, 10);
 
-        set_bgm(Some(&GOAL_BGM_SCORE));
+        set_bgm(Some(&GOAL_BGM_SCORE), false);
 
         if inputs.is_any_button_just_pressed() {
             Option::Some(Scene::TitleScene(TitleScene::new()))

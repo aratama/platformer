@@ -208,8 +208,6 @@ impl Body {
 
         self.input(&inputs, world);
 
-        self.physical_update(inputs.horizontal_acceralation() as i32, world);
-
         match self.stance {
             Stance::OnLadder(_) => {}
             _ => {
@@ -377,7 +375,7 @@ impl Body {
         self.position.y = aabb.y;
     }
 
-    fn jump(&mut self, world: &World) {
+    pub fn jump(&mut self, world: &World) {
         if self.is_grounded(world) {
             self.velocity.y = -JUMP_ACCELERATION;
             play_jump_se();

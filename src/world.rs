@@ -16,7 +16,7 @@ pub struct World {
     width: u32,
     height: u32,
     pub start: Vector2,
-    pub carrot: Vector2,
+    pub carrot: Option<Vector2>,
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
@@ -48,7 +48,7 @@ impl World {
             width: WORLD_WIDTH,
             height: WORLD.len() as u32 / WORLD_WIDTH,
             start,
-            carrot,
+            carrot: Some(carrot),
         }
     }
 
@@ -191,15 +191,18 @@ impl World {
                         );
                     }
 
-                    Block::Carrot => {
-                        g.set_draw_color(0x4320);
-                        g.draw(
-                            &CARROT_IMAGE,
-                            (CELL_SIZE * x) as i32,
-                            (CELL_SIZE * y) as i32,
-                            0,
-                        );
-                    }
+                    Block::Carrot => match self.carrot {
+                        None => {}
+                        Some(_) => {
+                            g.set_draw_color(0x4320);
+                            g.draw(
+                                &CARROT_IMAGE,
+                                (CELL_SIZE * x) as i32,
+                                (CELL_SIZE * y) as i32,
+                                0,
+                            );
+                        }
+                    },
                 }
             }
         }

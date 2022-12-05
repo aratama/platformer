@@ -2,13 +2,13 @@ use crate::body::Body;
 use crate::geometry::vector2::Vector2;
 use crate::graphics::Graphics;
 use crate::input::Inputs;
-use crate::music::level::LEVEL_BGM_SCORE;
+use crate::music::goal::GOAL_BGM_SCORE;
 use crate::netplay::{get_my_net_player_index, is_netplay_active};
 use crate::palette::set_draw_color;
-use crate::save::{load, save, GameData, GAME_DATA_VERSION};
+use crate::save::{save, GameData, GAME_DATA_VERSION};
 use crate::scene::Scene;
 use crate::se::play_smash_se;
-use crate::sound::set_bgm;
+use crate::sound::{set_bgm, Music};
 use crate::wasm4::*;
 use crate::world::{World, CELL_SIZE};
 use crate::world_map::WORLD_HEIGHT;
@@ -19,6 +19,22 @@ use super::ending_scene::EndingScene;
 
 const MIN_PLAYER_LOOKUP: i32 = -60;
 const MAX_PLAYER_LOOKUP: i32 = 70;
+
+#[derive(Clone, Copy)]
+enum Step {
+    SetBGM(&'static Music),
+    Sleep(u32),
+    Jump,
+    Finish,
+}
+
+static SENARIO: [Step; 5] = [
+    Step::SetBGM(&GOAL_BGM_SCORE),
+    Step::Sleep(360),
+    Step::Jump,
+    Step::Sleep(60),
+    Step::Finish,
+];
 
 #[derive(Clone)]
 pub struct GameScene {
@@ -32,6 +48,8 @@ pub struct GameScene {
     debug: bool,
 
     prev_gamepads: [u8; 4],
+
+    senario: Vec<Step>,
 }
 
 impl GameScene {
@@ -82,15 +100,46 @@ impl GameScene {
             debug: false,
 
             prev_gamepads: [0, 0, 0, 0],
+
+            senario: vec![],
         }
     }
 
     pub fn update(&mut self, inputs: &Inputs, player_active: &[bool; 4]) -> Option<Scene> {
-        self.frame_count += 1;
+        if self.senario.len() == 0 {
+            // 入力に従った更新
+            for (index, active) in player_active.iter().enumerate() {
+                if *active {
+                    self.players[index].update(&self.world);
+                }
+            }
+            self.frame_count += 1;
+        } else {
+            // シナリオがある場合はシナリオを再生
+            match self.senario[0] {
+                Step::SetBGM(music) => {
+                    set_bgm(Some(music), false);
+                    self.senario = self.senario[1..].to_vec()
+                }
+                Step::Sleep(0) => self.senario = self.senario[1..].to_vec(),
+                Step::Sleep(count) => {
+                    self.senario[0] = Step::Sleep(count - 1);
+                }
+                Step::Jump => {
+                    self.players[0].jump(&self.world);
+                    self.senario = self.senario[1..].to_vec()
+                }
+                Step::Finish => {
+                    return Option::Some(Scene::EndingScene(EndingScene::new()));
+                }
+            }
+        }
 
+        // 物理演算の更新
         for (index, active) in player_active.iter().enumerate() {
             if *active {
-                self.players[index].update(&self.world);
+                self.players[index]
+                    .physical_update(inputs.horizontal_acceralation() as i32, &self.world);
             }
         }
 
@@ -131,13 +180,19 @@ impl GameScene {
 
         self.render(player_active);
 
-        // bgm
-        set_bgm(Option::Some(LEVEL_BGM_SCORE));
+        // // bgm
+        // set_bgm(Option::Some(LEVEL_BGM_SCORE));
 
         // ゴール
-        for player in self.players.iter() {
-            if player.position.distance(self.world.carrot) < CELL_SIZE as f32 {
-                return Option::Some(Scene::EndingScene(EndingScene::new()));
+        match self.world.carrot {
+            None => {}
+            Some(carrot) => {
+                for player in self.players.iter() {
+                    if player.position.distance(carrot) < CELL_SIZE as f32 {
+                        self.world.carrot = None;
+                        self.senario = SENARIO.to_vec();
+                    }
+                }
             }
         }
 
