@@ -1,4 +1,5 @@
-use crate::graphics::Graphics;
+use crate::graphics::{draw_japanese_string, Graphics};
+use crate::image::misaki_gothic_2nd::{self, MISAKI_GOTHIC_2ND_IMAGE};
 use crate::input::Inputs;
 use crate::netplay::is_netplay_active;
 use crate::save::{load, GameData};
@@ -58,6 +59,11 @@ impl TitleScene {
             TITLE_IMAGE.height,
             TITLE_IMAGE.flags,
         );
+
+        set_draw_color(0x11);
+        rect(0, 0, 150, 20);
+        set_draw_color(0x14);
+        draw_japanese_string("にほんごabcdeカタカナ", 1, 1);
 
         let mut g = Graphics::new(self.frame_count);
 

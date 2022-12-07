@@ -6,6 +6,7 @@ pub mod jump;
 pub mod ladder;
 pub mod lie;
 pub mod lookup;
+pub mod misaki_gothic_2nd;
 pub mod player;
 pub mod player_ladder0;
 pub mod player_ladder1;

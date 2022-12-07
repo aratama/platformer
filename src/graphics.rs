@@ -1,4 +1,5 @@
 use crate::animation::Animation;
+use crate::image::misaki_gothic_2nd::MISAKI_GOTHIC_2ND_IMAGE;
 use crate::image::Image;
 use crate::palette::set_draw_color;
 use crate::wasm4::*;
@@ -88,5 +89,36 @@ impl Graphics {
     pub fn transate(&mut self, dx: i32, dy: i32) {
         self.dx += dx;
         self.dy += dy;
+    }
+}
+
+pub fn draw_japanese_string(str: &str, x: i32, y: i32) {
+    let chars = str.chars();
+    let v: Vec<char> = chars.collect();
+
+    for (i, char) in v.into_iter().enumerate() {
+        let code = char as u32;
+        if 'ぁ' as u32 <= code && code <= 'ヶ' as u32 {
+            // set_draw_color(0x14);
+            blit_sub(
+                MISAKI_GOTHIC_2ND_IMAGE.data,
+                x + (8 * i) as i32,
+                y,
+                8,
+                8,
+                8 * if code <= 'ん' as u32 {
+                    code - 'ぁ' as u32
+                } else {
+                    code - 'ァ' as u32
+                },
+                if code <= 'ん' as u32 { 0 } else { 8 },
+                MISAKI_GOTHIC_2ND_IMAGE.width,
+                MISAKI_GOTHIC_2ND_IMAGE.flags,
+            );
+        } else {
+            // set_draw_color(0x41);
+            let str: String = char.into();
+            text(str, x + 8 * i as i32, y);
+        }
     }
 }
