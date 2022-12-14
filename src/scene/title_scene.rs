@@ -1,5 +1,4 @@
 use crate::graphics::{draw_japanese_string, Graphics};
-use crate::image::misaki_gothic_2nd::{self, MISAKI_GOTHIC_2ND_IMAGE};
 use crate::input::Inputs;
 use crate::netplay::is_netplay_active;
 use crate::save::{load, GameData};
